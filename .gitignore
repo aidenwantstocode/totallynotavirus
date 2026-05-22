@@ -1,0 +1,29 @@
+# Build and Output Directories
+# ==========================================
+build/
+bin/
+out/
+
+# IDE and Editor Files (VS Code)
+# ==========================================
+.vscode/
+
+# CMake Generated Files (Backup for root files)
+# ==========================================
+CMakeUserPresets.json
+
+# OS Generated Files
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# C++ / Compiler Artifacts (If generated outside build)
+# ==========================================
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.gch
+*.pdb
+*.ilk

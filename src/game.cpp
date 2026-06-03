@@ -24,6 +24,8 @@ void Game::processEvents() {
         if (event.type == sf::Event::Closed) {
             window.close();
         }
+        notepad.handleEvent(event, window);
+
         if (event.type == sf::Event::MouseButtonPressed) {
             desktop.handleInput(sf::Mouse::getPosition(window));
         }
@@ -32,6 +34,7 @@ void Game::processEvents() {
 
 void Game::update() {
     desktop.update();
+    notepad.update();
     glitchManager.update();
 }
 
@@ -39,6 +42,7 @@ void Game::render() {
     window.clear();
     
     desktop.draw(window);
+    notepad.draw(window);
     glitchManager.applyEffect(window);
 
     window.display();

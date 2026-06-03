@@ -8,20 +8,27 @@ class VirtualWindow {
 protected:
     sf::RectangleShape windowFrame;
     sf::RectangleShape titleBar;
+    sf::RectangleShape closeButton;
+    sf::Font font;
     sf::Text titleText;
+    sf::Text closeText;
+
     bool isOpen;
     bool isDragged;
+    sf::Vector2f dragOffset;
 
 public:
     VirtualWindow(const std::string& title, float width, float height);
     virtual ~VirtualWindow() = default;
 
+    //click and drag mouse FOR THIS WINDOW
     virtual void handleEvent(const sf::Event& event, const sf::RenderWindow& window);
     virtual void update();
     virtual void draw(sf::RenderWindow& window);
 
     bool getIsOpen() const { return isOpen; }
     void setIsOpen(bool open) { isOpen = open; }
+    void setPosition(float x, float y);
 };
 
 #endif

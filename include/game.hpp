@@ -4,13 +4,15 @@
 #include <SFML/Graphics.hpp>
 #include "Desktop.hpp"
 #include "GlitchManager.hpp"
+#include "Apps.hpp"
 
 class Game {
 private:
     sf::RenderWindow window;
     Desktop desktop;
     GlitchManager glitchManager;
-
+    NotepadApp notepad;
+    
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;
 

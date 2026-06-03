@@ -7,6 +7,12 @@ class Desktop {
 private:
     sf::RectangleShape background;
     sf::RectangleShape taskbar;
+    sf::Font font;
+    sf::RectangleShape startButton;
+    sf::Text startText;
+    sf::Text clockText;
+
+    void updateClock();
 
 public:
     Desktop();

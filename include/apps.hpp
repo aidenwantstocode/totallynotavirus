@@ -31,4 +31,15 @@ public:
     void draw(sf::RenderWindow& window) override;
 };
 
+class DriveRecoveryApp : public VirtualWindow {
+private:
+    sf::Font font;
+    sf::Text statusText;
+
+public:
+    DriveRecoveryApp();
+    void update() override;
+    void draw(sf::RenderWindow& window) override;
+};
+
 #endif

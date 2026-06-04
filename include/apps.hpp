@@ -6,10 +6,12 @@
 //notepad app
 class NotepadApp : public VirtualWindow {
 private:
+    sf::Font font;
     sf::Text contentText;
+
 public:
     NotepadApp();
-    void update() override; // Polimorfisme: Mengganti fungsi update bawaan induk
+    void update() override;
     void draw(sf::RenderWindow& window) override;
 };
 

@@ -87,10 +87,12 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
         //lock window inside the main render window bounds
         if (newX < 0) newX = 0;
         if (newY < 0) newY = 0;
+
         if (newX + windowFrame.getSize().x > window.getSize().x)
             newX = window.getSize().x - windowFrame.getSize().x;
-        if (newY + windowFrame.getSize().y > window.getSize().y)
-            newY = window.getSize().y - windowFrame.getSize().y;
+
+        if (newY + windowFrame.getSize().y > window.getSize().y - 40)
+            newY = (window.getSize().y - 40) - windowFrame.getSize().y;
 
         setPosition(newX, newY);
     }

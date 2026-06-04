@@ -27,7 +27,10 @@ void Game::processEvents() {
         notepad.handleEvent(event, window);
 
         if (event.type == sf::Event::MouseButtonPressed) {
-            desktop.handleInput(sf::Mouse::getPosition(window));
+            std::string clickedApp = desktop.handleInput(sf::Mouse::getPosition(window));
+            if (clickedApp == "notepad") {
+                notepad.setIsOpen(true);
+            }
         }
     }
 }

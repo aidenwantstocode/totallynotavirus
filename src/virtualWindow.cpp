@@ -6,7 +6,7 @@ VirtualWindow::VirtualWindow(const std::string& title, float width, float height
     isDragged = false;
 
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
-        std::cerr << "[ERROR] VirtualWindow gagal memuat font.\n";
+        std::cerr << "[ERROR] VirtualWindow FAILED TO LOAD FONT\n";
     }
 
     // outside window frame
@@ -63,7 +63,7 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
         //close window check
         if (closeButton.getGlobalBounds().contains(mousePos)) {
             isOpen = false;
-            std::cout << "[OS Engine] Jendela ditutup oleh pemain.\n";
+            std::cout << "[OS Engine] VirtualWindow closed by user.\n";
             return;
         }
 

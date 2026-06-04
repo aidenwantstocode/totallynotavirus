@@ -2,6 +2,7 @@
 #define APPS_HPP
 
 #include "VirtualWindow.hpp"
+#include <string>
 
 //notepad app
 class NotepadApp : public VirtualWindow {
@@ -18,9 +19,14 @@ public:
 //terminal/cmd virus app
 class TerminalApp : public VirtualWindow {
 private:
-    sf::Text commandLineText;
+    sf::Font font;
+    sf::Text terminalText;
+    std::string commandHistory;
+    std::string currentInput;
+
 public:
     TerminalApp();
+    void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override; // Menangkap ketikan keyboard
     void update() override;
     void draw(sf::RenderWindow& window) override;
 };

@@ -15,6 +15,7 @@ protected:
 
     bool isOpen;
     bool isDragged;
+    bool hasFocus;
     sf::Vector2f dragOffset;
 
 public:
@@ -28,7 +29,10 @@ public:
 
     bool getIsOpen() const { return isOpen; }
     void setIsOpen(bool open) { isOpen = open; }
+    bool getHasFocus() const { return hasFocus; }
+    void setHasFocus(bool focus) { hasFocus = focus; }
     void setPosition(float x, float y);
+    bool containsPoint(sf::Vector2f point) const { return windowFrame.getGlobalBounds().contains(point); }
 };
 
 #endif

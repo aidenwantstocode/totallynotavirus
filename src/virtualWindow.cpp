@@ -3,8 +3,7 @@
 
 VirtualWindow::VirtualWindow(const std::string& title, float width, float height) {
     isOpen = true;
-    isDragged = false;
-
+    isDragged = false;    hasFocus = false;
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
         std::cerr << "[ERROR] VirtualWindow FAILED TO LOAD FONT\n";
     }
@@ -60,6 +59,14 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
     //mouse click logic
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         
+        //check if click is on this window - gain focus
+        if (windowFrame.getGlobalBounds().contains(mousePos)) {
+            hasFocus = true;
+        } else {
+            //click outside window - lose focus
+            hasFocus = false;
+        }
+        
         //close window check
         if (closeButton.getGlobalBounds().contains(mousePos)) {
             isOpen = false;
@@ -67,8 +74,8 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
             return;
         }
 
-        //title bar drag check
-        if (titleBar.getGlobalBounds().contains(mousePos)) {
+        //title bar drag check (only drag if focused)
+        if (hasFocus && titleBar.getGlobalBounds().contains(mousePos)) {
             isDragged = true;
             dragOffset = mousePos - windowFrame.getPosition();
         }

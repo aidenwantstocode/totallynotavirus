@@ -12,6 +12,7 @@ private:
     Desktop desktop;
     GlitchManager glitchManager;
     NotepadApp notepad;
+    TerminalApp terminal;
     
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;

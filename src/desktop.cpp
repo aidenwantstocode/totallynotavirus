@@ -41,6 +41,7 @@ void Desktop::init(unsigned int width, unsigned int height) {
 
     //DESKTOP ICONS
     createIcon("Notepad", "notepad", 40.0f, 40.0f);
+    createIcon("Terminal", "cmd", 40.0f, 130.0f);
 }
 
 void Desktop::createIcon(const std::string& title, const std::string& id, float x, float y) {

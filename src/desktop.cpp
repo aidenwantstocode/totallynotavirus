@@ -40,7 +40,7 @@ void Desktop::init(unsigned int width, unsigned int height) {
     updateClock();
 
     //DESKTOP ICONS
-    createIcon("Notepad", "notepad", 40.0f, 40.0f);
+    createIcon("todo_list.txt", "notepad", 40.0f, 40.0f);
     createIcon("Terminal", "cmd", 40.0f, 130.0f);
 }
 

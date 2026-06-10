@@ -3,7 +3,7 @@
 
 //NOTEPAD APP
 
-NotepadApp::NotepadApp() : VirtualWindow("Notepad - todo_list.txt", 450, 350) {
+NotepadApp::NotepadApp() : VirtualWindow("Notepad", 450, 350) {
     isOpen = false;
     windowFrame.setFillColor(sf::Color(255, 255, 255)); 
 
@@ -11,16 +11,19 @@ NotepadApp::NotepadApp() : VirtualWindow("Notepad - todo_list.txt", 450, 350) {
         std::cerr << "[ERROR] NotepadApp FAILED TO LOAD FONT\n";
     }
 
-    //notepad text properties
     contentText.setFont(font);
     contentText.setCharacterSize(12);
     contentText.setFillColor(sf::Color(50, 50, 50));
     contentText.setLineSpacing(1.2f);
+    contentText.setString("");
+}
 
-    std::string diaryText = 
-        "lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
-        
-    contentText.setString(diaryText);
+//Dynamic function for opening files in notepad with different content based on filename
+void NotepadApp::openFile(const std::string& filename, const std::string& content) {
+    titleText.setString("Notepad - " + filename);
+    contentText.setString(content);
+    isOpen = true;
+    hasFocus = true;
 }
 
 void NotepadApp::update() {
@@ -32,7 +35,6 @@ void NotepadApp::update() {
 
 void NotepadApp::draw(sf::RenderWindow& window) {
     VirtualWindow::draw(window); 
-
     if (isOpen) {
         window.draw(contentText);
     }

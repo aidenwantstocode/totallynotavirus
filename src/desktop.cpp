@@ -39,9 +39,10 @@ void Desktop::init(unsigned int width, unsigned int height) {
 
     updateClock();
 
-    //DESKTOP ICONS
-    createIcon("todo_list.txt", "notepad", 40.0f, 40.0f);
-    createIcon("Terminal", "cmd", 40.0f, 130.0f);
+    //  DESKTOP ICONS WITH UNIQUE FILE IDS
+    createIcon("todo_list.txt", "txt_todo", 40.0f, 40.0f);     // ID: txt_todo
+    createIcon("Terminal", "cmd", 40.0f, 130.0f);              // ID: cmd
+    createIcon("system_log.txt", "txt_log", 40.0f, 220.0f);    // ID: txt_log (BERKAS BARU!)
 }
 
 void Desktop::createIcon(const std::string& title, const std::string& id, float x, float y) {

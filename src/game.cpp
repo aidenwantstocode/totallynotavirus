@@ -27,18 +27,32 @@ void Game::processEvents() {
             window.close();
         }
 
-        //convert mouse position to world coordinates
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
         if (event.type == sf::Event::MouseButtonPressed) {
             std::string clickedApp = desktop.handleInput(pixelPos);
-            if (clickedApp == "notepad") {
-                notepad.setIsOpen(true);
-                notepad.setHasFocus(true);
+            
+            if (clickedApp == "txt_todo") {
                 terminal.setHasFocus(false);
+                notepad.openFile("todo_list.txt", 
+                    "AMITY OS SYSTEM LOG - TODO LIST\n"
+                    "===================================\n"
+                    "1. Fix terminal installation errors.\n"
+                    "2. Run the Drive Recovery Tool.\n"
+                    "3. DO NOT look at the basement drive light.");
             }
-            if (clickedApp == "cmd") {
+            
+            else if (clickedApp == "txt_log") {
+                terminal.setHasFocus(false);
+                notepad.openFile("system_log.txt", 
+                    "WARNING: Sector 0x04F2 corrupted.\n"
+                    "Unidentified logic injection detected in flash device.\n"
+                    "Amity Shield Antivirus failed to clean threats (0%).\n"
+                    "Anomalous behavior expanding...");
+            }
+            
+            else if (clickedApp == "cmd") {
                 terminal.setIsOpen(true);
                 terminal.setHasFocus(true);
                 notepad.setHasFocus(false);

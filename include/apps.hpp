@@ -12,6 +12,7 @@ private:
 
 public:
     NotepadApp();
+    void openFile(const std::string& filename, const std::string& content);
     void update() override;
     void draw(sf::RenderWindow& window) override;
 };
@@ -26,7 +27,7 @@ private:
 
 public:
     TerminalApp();
-    void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override; // Menangkap ketikan keyboard
+    void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override;
     void update() override;
     void draw(sf::RenderWindow& window) override;
 };

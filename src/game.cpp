@@ -57,6 +57,14 @@ void Game::processEvents() {
                 terminal.setHasFocus(true);
                 notepad.setHasFocus(false);
             }
+
+            else if (clickedApp == "pkg_installer") {
+                installerWizard.setIsOpen(true);
+                installerWizard.setHasFocus(true);
+                
+                notepad.setHasFocus(false);
+                terminal.setHasFocus(false);
+            }
         }
 
         //check if click is on the focused window - if so, block events to other windows
@@ -65,6 +73,8 @@ void Game::processEvents() {
             if (notepad.getHasFocus() && notepad.getIsOpen() && notepad.containsPoint(mousePos)) {
                 clickOnFocusedWindow = true;
             } else if (terminal.getHasFocus() && terminal.getIsOpen() && terminal.containsPoint(mousePos)) {
+                clickOnFocusedWindow = true;
+            } else if (installerWizard.getHasFocus() && installerWizard.getIsOpen() && installerWizard.containsPoint(mousePos)) {
                 clickOnFocusedWindow = true;
             }
         }
@@ -80,10 +90,21 @@ void Game::processEvents() {
                 terminal.handleEvent(event, window);
             }
         }
+        if (installerWizard.getIsOpen()) {
+            if (installerWizard.getHasFocus() || !clickOnFocusedWindow) {
+                installerWizard.handleEvent(event, window);
+            }
+        }
         
         //ensure focus exclusivity - only one window can have focus
         if (notepad.getHasFocus() && terminal.getHasFocus()) {
             terminal.setHasFocus(false);
+        }
+        if (notepad.getHasFocus() && installerWizard.getHasFocus()) {
+            installerWizard.setHasFocus(false);
+        }
+        if (terminal.getHasFocus() && installerWizard.getHasFocus()) {
+            installerWizard.setHasFocus(false);
         }
     }
 }
@@ -92,6 +113,7 @@ void Game::update() {
     desktop.update();
     notepad.update();
     terminal.update();
+    installerWizard.update();
     glitchManager.update();
 }
 
@@ -101,11 +123,17 @@ void Game::render() {
     desktop.draw(window);
     
     //draw windows in z-order (unfocused first, focused on top)
-    if (notepad.getHasFocus()) {
+    if (installerWizard.getHasFocus() && installerWizard.getIsOpen()) {
+        notepad.draw(window);
         terminal.draw(window);
+        installerWizard.draw(window);
+    } else if (notepad.getHasFocus()) {
+        terminal.draw(window);
+        installerWizard.draw(window);
         notepad.draw(window);
     } else {
         notepad.draw(window);
+        installerWizard.draw(window);
         terminal.draw(window);
     }
     

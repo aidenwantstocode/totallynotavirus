@@ -5,6 +5,7 @@
 #include "desktop.hpp"
 #include "glitchManager.hpp"
 #include "coreApps.hpp"
+#include "installerApps.hpp"
 
 class Game {
 private:
@@ -13,6 +14,7 @@ private:
     GlitchManager glitchManager;
     NotepadApp notepad;
     TerminalApp terminal;
+    SoftwareInstallerApp installerWizard;
     
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;

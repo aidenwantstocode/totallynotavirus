@@ -12,6 +12,7 @@ add_executable(totallynotavirus
     src/virtualWindow.cpp
     src/coreApps.cpp
     src/glitchManager.cpp
+    src/installerApps.cpp
 )
 
 target_link_libraries(totallynotavirus sfml-graphics sfml-window sfml-audio sfml-network sfml-system)

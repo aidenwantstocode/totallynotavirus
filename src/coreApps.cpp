@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Apps.hpp"
+#include "coreApps.hpp"
 
 //NOTEPAD APP
 

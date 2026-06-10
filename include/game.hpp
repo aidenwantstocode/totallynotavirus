@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "Desktop.hpp"
 #include "GlitchManager.hpp"
-#include "Apps.hpp"
+#include "coreApps.hpp"
 
 class Game {
 private:

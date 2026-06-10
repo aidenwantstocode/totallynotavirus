@@ -1,7 +1,7 @@
 #ifndef APPS_HPP
 #define APPS_HPP
 
-#include "VirtualWindow.hpp"
+#include "virtualWindow.hpp"
 #include <string>
 
 //notepad app

@@ -2,8 +2,8 @@
 #define GAME_HPP
 
 #include <SFML/Graphics.hpp>
-#include "Desktop.hpp"
-#include "GlitchManager.hpp"
+#include "desktop.hpp"
+#include "glitchManager.hpp"
 #include "coreApps.hpp"
 
 class Game {

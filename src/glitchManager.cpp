@@ -1,4 +1,4 @@
-#include "GlitchManager.hpp"
+#include "glitchManager.hpp"
 
 GlitchManager::GlitchManager() {
     isGlitching = false;

@@ -9,7 +9,7 @@ add_executable(totallynotavirus
     src/main.cpp
     src/game.cpp
     src/desktop.cpp
-    src/virtualwindow.cpp
+    src/virtualWindow.cpp
     src/coreApps.cpp
     src/glitchManager.cpp
 )

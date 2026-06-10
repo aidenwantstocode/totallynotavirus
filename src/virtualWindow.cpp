@@ -1,4 +1,4 @@
-#include "VirtualWindow.hpp"
+#include "virtualWindow.hpp"
 #include <iostream>
 
 VirtualWindow::VirtualWindow(const std::string& title, float width, float height) {

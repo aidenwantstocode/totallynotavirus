@@ -1,4 +1,4 @@
-#include "Desktop.hpp"
+#include "desktop.hpp"
 #include <iostream>
 #include <ctime>
 #include <iomanip>
@@ -42,7 +42,7 @@ void Desktop::init(unsigned int width, unsigned int height) {
     //  DESKTOP ICONS WITH UNIQUE FILE IDS
     createIcon("todo_list.txt", "txt_todo", 40.0f, 40.0f);     // ID: txt_todo
     createIcon("Terminal", "cmd", 40.0f, 130.0f);              // ID: cmd
-    createIcon("system_log.txt", "txt_log", 40.0f, 220.0f);    // ID: txt_log (BERKAS BARU!)
+    createIcon("system_log.txt", "txt_log", 40.0f, 220.0f);    // ID: txt_log
 }
 
 void Desktop::createIcon(const std::string& title, const std::string& id, float x, float y) {

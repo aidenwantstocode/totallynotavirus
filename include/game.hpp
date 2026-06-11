@@ -19,6 +19,9 @@ private:
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;
 
+    float systemDelayMultiplier;
+    void recalculateSystemPerformance();
+
     void initWindow();
 
 public:

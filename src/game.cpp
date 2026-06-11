@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "game.hpp"
 
 Game::Game() {
@@ -5,6 +7,7 @@ Game::Game() {
     desktop.init(SCREEN_WIDTH, SCREEN_HEIGHT);
     notepad.setHasFocus(true);
     terminal.setHasFocus(false);
+    systemDelayMultiplier = 1.0f;
 }
 
 void Game::initWindow() {
@@ -93,6 +96,10 @@ void Game::processEvents() {
         if (installerWizard.getIsOpen()) {
             if (installerWizard.getHasFocus() || !clickOnFocusedWindow) {
                 installerWizard.handleEvent(event, window);
+                //safeguard (recalculate performance)
+                if (installerWizard.getIsFinalized() && systemDelayMultiplier == 1.0f) {
+                    recalculateSystemPerformance();
+                }
             }
         }
         
@@ -140,4 +147,25 @@ void Game::render() {
     glitchManager.applyEffect(window);
 
     window.display();
+}
+
+void Game::recalculateSystemPerformance() {
+    float newMultiplier = 1.0f; //1.0f = 100% normal speed
+
+    if (installerWizard.isComponentChecked("antivirus")) {
+        newMultiplier += 0.5f; //system instability +50%
+        std::cout << "[OS Kernel] Amity Shield Antivirus detected. Allocating memory...\n";
+    }
+    if (installerWizard.isComponentChecked("health_monitor")) {
+        newMultiplier += 0.3f; // system instability +30%
+        std::cout << "[OS Kernel] Marrow Health Monitor active. Scanning cycles...\n";
+    }
+    if (installerWizard.isComponentChecked("abstractor")) {
+        newMultiplier += 0.4f; //system instability +40%
+        std::cout << "[OS Kernel] Memory Abstractor engaged. Shifting heap...\n";
+    }
+
+    systemDelayMultiplier = newMultiplier;
+    
+    std::cout << "[OS Kernel] TOTAL SYSTEM DELAY MULTIPLIER: " << systemDelayMultiplier << "x\n";
 }

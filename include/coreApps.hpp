@@ -25,11 +25,17 @@ private:
     std::string commandHistory;
     std::string currentInput;
 
+    float delayMultiplier = 1.0f;
+    bool isProcessing = false;
+    sf::Clock processingClock;
+    float requiredProcessingTime = 0.0f;
+
 public:
     TerminalApp();
     void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override;
     void update() override;
     void draw(sf::RenderWindow& window) override;
+    void setDelayMultiplier(float multiplier);
 };
 
 class DriveRecoveryApp : public VirtualWindow {

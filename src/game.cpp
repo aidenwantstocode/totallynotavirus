@@ -166,6 +166,6 @@ void Game::recalculateSystemPerformance() {
     }
 
     systemDelayMultiplier = newMultiplier;
-    
+    terminal.setDelayMultiplier(systemDelayMultiplier);
     std::cout << "[OS Kernel] TOTAL SYSTEM DELAY MULTIPLIER: " << systemDelayMultiplier << "x\n";
 }

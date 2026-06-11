@@ -83,13 +83,19 @@ void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& wi
             else if (currentInput == "status") {
                 commandHistory += currentInput + "\n[SYSTEM STATUS]: INTEGRITY SECURE\n[FIREWALL]: SHIELD ACTIVE (100%)\n\nC:\\> ";
             } 
+            else if (currentInput == "recover") {
+                isProcessing = true;
+                requiredProcessingTime = 3.0f * delayMultiplier;    //3 second standard delay, multiplied by apps modifier
+                processingClock.restart();
+                commandHistory += "\n[SYSTEM] Initiating Drive Recovery Tool...";
+                commandHistory += "\n[SYSTEM] Please wait, processing clusters...\n";
+            }
             else if (!currentInput.empty()) {
                 commandHistory += currentInput + "\n'" + currentInput + "' is not recognized as an internal or external command.\n\nC:\\> ";
             } 
             else {
                 commandHistory += "\nC:\\> ";
             }
-            
             currentInput = "";
         }
         else if (event.text.unicode < 128 && event.text.unicode >= 32) {
@@ -105,6 +111,14 @@ void TerminalApp::update() {
     if (isOpen) {
         terminalText.setPosition(windowFrame.getPosition().x + 12, windowFrame.getPosition().y + 40);
     }
+    if (isProcessing) {
+        if (processingClock.getElapsedTime().asSeconds() >= requiredProcessingTime) {
+            isProcessing = false;
+            commandHistory += "\n[SUCCESS] Sector 0x04F2 recovered successfully!";
+            commandHistory += "\nAmityOS Key: [A1-99X-E9]\n";
+            terminalText.setString(commandHistory + currentInput);
+        }
+    }
 }
 
 void TerminalApp::draw(sf::RenderWindow& window) {
@@ -112,4 +126,8 @@ void TerminalApp::draw(sf::RenderWindow& window) {
     if (isOpen) {
         window.draw(terminalText);
     }
+}
+
+void TerminalApp::setDelayMultiplier(float multiplier) {
+    delayMultiplier = multiplier;
 }

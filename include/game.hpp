@@ -20,6 +20,7 @@ private:
     const unsigned int SCREEN_HEIGHT = 768;
 
     float systemDelayMultiplier;
+    bool isDriveRecoveryCorrupted = false;
     void recalculateSystemPerformance();
 
     void initWindow();

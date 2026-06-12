@@ -26,6 +26,17 @@ private:
 
     bool isFinalized;
     void createCheckbox(const std::string& labelText, const std::string& id, float x, float y);
+    int uninstallClickCount = 0;
+    bool isSystemCorrupted = false;
+
+    bool isErrorOpen = false;
+    sf::RectangleShape errorBg;
+    sf::RectangleShape errorTitleBarBg;
+    sf::RectangleShape errorOkButton;
+    sf::Text errorTitleText;
+    sf::Text errorBodyText;
+    sf::Text errorOkText;
+    void initErrorPopup();
 
 public:
     SoftwareInstallerApp();
@@ -35,6 +46,7 @@ public:
     void draw(sf::RenderWindow& window) override;
     bool isComponentChecked(const std::string& id) const;
     bool getIsFinalized() const { return isFinalized; }
+    void setSystemCorrupted(bool status);
 };
 
 #endif

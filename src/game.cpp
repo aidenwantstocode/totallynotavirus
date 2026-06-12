@@ -18,7 +18,12 @@ void Game::initWindow() {
 void Game::run() {
     while (window.isOpen()) {
         processEvents();
-        update();
+        
+        terminal.update();
+        notepad.update();
+        installerWizard.update();
+        
+        installerWizard.setSystemCorrupted(isDriveRecoveryCorrupted);
         render();
     }
 }

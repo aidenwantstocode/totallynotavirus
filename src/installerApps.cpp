@@ -4,7 +4,7 @@
 SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("Amity Package Manager v1.0", 500, 380) {
     isOpen = false;
     isFinalized = false;
-    windowFrame.setFillColor(sf::Color(192, 192, 192)); // Abu-abu klasik 90an
+    windowFrame.setFillColor(sf::Color(192, 192, 192));
 
     if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
         std::cerr << "[ERROR] SoftwareInstallerApp FAILED TO LOAD FONT\n";
@@ -15,19 +15,17 @@ SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("Amity Package Mana
     headerText.setCharacterSize(13);
     headerText.setFillColor(sf::Color::Black);
 
-    //latency function text
     warningText.setFont(font);
     warningText.setString("WARNING: Installing optional modules will allocate shared\n"
                          "conventional memory, causing noticeable system latency (LAG).");
     warningText.setCharacterSize(11);
-    warningText.setFillColor(sf::Color(130, 0, 0)); //redcolor for warning
+    warningText.setFillColor(sf::Color(130, 0, 0));
     warningText.setStyle(sf::Text::Bold);
 
     createCheckbox("Amity Shield Antivirus (Suppress 30% minor glitches)", "antivirus", 30.0f, 80.0f);
     createCheckbox("Marrow PC Health Monitor (Show Integrity on Taskbar)", "health_monitor", 30.0f, 130.0f);
     createCheckbox("Memory Abstractor (Emergency system defragmenter)", "abstractor", 30.0f, 180.0f);
 
-    // Setup Tombol Finalize Install
     finalizeBtn.setSize(sf::Vector2f(130, 30));
     finalizeBtn.setFillColor(sf::Color(220, 220, 220));
     finalizeBtn.setOutlineThickness(1.5f);
@@ -47,6 +45,45 @@ SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("Amity Package Mana
     uninstallText.setString("Uninstall Apps");
     uninstallText.setCharacterSize(12);
     uninstallText.setFillColor(sf::Color(100, 100, 100));
+
+    initErrorPopup();
+}
+
+void SoftwareInstallerApp::initErrorPopup() {
+    errorBg.setSize(sf::Vector2f(360.f, 160.f));
+    errorBg.setFillColor(sf::Color(192, 192, 192));
+    errorBg.setOutlineThickness(2.f);
+    errorBg.setOutlineColor(sf::Color::White);
+
+    errorTitleBarBg.setSize(sf::Vector2f(360.f, 22.f));
+    errorTitleBarBg.setFillColor(sf::Color(0, 0, 128));
+
+    errorTitleText.setFont(font);
+    errorTitleText.setString("Amity Setup Wizard - Execution Error");
+    errorTitleText.setCharacterSize(12);
+    errorTitleText.setFillColor(sf::Color::White);
+    errorTitleText.setStyle(sf::Text::Bold);
+
+    errorBodyText.setFont(font);
+    errorBodyText.setString(
+        "[X] The uninstallation log file (UNINST.ISU) is currently\n"
+        "    locked by a low-level VXD memory hook. Software\n"
+        "    components allocated to conventional memory cannot be\n"
+        "    unmapped during an active session.\n\n"
+        "    Please restart AmityOS in Safe Mode to modify."
+    );
+    errorBodyText.setCharacterSize(11);
+    errorBodyText.setFillColor(sf::Color::Black);
+
+    errorOkButton.setSize(sf::Vector2f(60.f, 25.f));
+    errorOkButton.setFillColor(sf::Color(192, 192, 192));
+    errorOkButton.setOutlineThickness(1.5f);
+    errorOkButton.setOutlineColor(sf::Color(100, 100, 100));
+
+    errorOkText.setFont(font);
+    errorOkText.setString("OK");
+    errorOkText.setCharacterSize(12);
+    errorOkText.setFillColor(sf::Color::Black);
 }
 
 void SoftwareInstallerApp::createCheckbox(const std::string& labelText, const std::string& id, float x, float y) {
@@ -61,12 +98,11 @@ void SoftwareInstallerApp::createCheckbox(const std::string& labelText, const st
     item.checkMark.setSize(sf::Vector2f(10, 10));
     item.checkMark.setFillColor(sf::Color::Transparent); 
 
-    //text lables
     item.label.setFont(font);
     item.label.setString(labelText);
     item.label.setCharacterSize(12);
     item.label.setFillColor(sf::Color::Black);
-    //relative start position
+    
     item.box.setPosition(x, y);
     item.checkMark.setPosition(x + 3, y + 3);
     item.label.setPosition(x + 25, y + 1);
@@ -78,11 +114,21 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
     VirtualWindow::handleEvent(event, window);
     if (!isOpen) return;
 
+    if (isErrorOpen) {
+        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+            sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+            sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+            if (errorOkButton.getGlobalBounds().contains(mousePos)) {
+                isErrorOpen = false;
+            }
+        }
+        return; // Blokir interaksi ke background installer saat popup terbuka
+    }
+
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
-
-        //checkboxes logic (not final yet)
+        
         if (!isFinalized) {
             for (auto& item : checkboxes) {
                 if (item.box.getGlobalBounds().contains(mousePos)) {
@@ -91,14 +137,11 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
                     std::cout << "[Installer] Toggle " << item.appId << " to: " << item.isChecked << "\n";
                 }
             }
-
-            //finalize button logic
             if (finalizeBtn.getGlobalBounds().contains(mousePos)) {
                 isFinalized = true;
-                finalizeBtn.setFillColor(sf::Color(140, 140, 140)); // Menggelap karena terkunci
+                finalizeBtn.setFillColor(sf::Color(140, 140, 140)); 
                 finalizeText.setFillColor(sf::Color(200, 200, 200));
                 
-                //buitton visual for uninstall button
                 uninstallBtn.setFillColor(sf::Color(220, 220, 220));
                 uninstallBtn.setOutlineColor(sf::Color::White);
                 uninstallText.setFillColor(sf::Color::Black);
@@ -106,10 +149,35 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
                 std::cout << "[Installer] Installation finalized successfully!\n";
             }
         } 
-        //uninstall button logic
-        else if (isFinalized && uninstallBtn.getGlobalBounds().contains(mousePos)) {
-            std::cout << "[HORROR TRIGGER] Player tried to uninstall. Access Denied Pop-up should appear!\n";
-            //upcoming: connect to error window in Game.cpp
+        
+        if (uninstallBtn.getGlobalBounds().contains(mousePos)) { 
+            if (!isSystemCorrupted) {
+                //---------------- BEFORE INFECTION (UI POPUP) -----------------
+                isErrorOpen = true; 
+            } 
+            else {
+                //---------------- AFTER INFECTION (CONSOLE LOGIC FOR NOW) -----------------
+                uninstallClickCount++;
+                if (uninstallClickCount == 1) {
+                    std::cout << "\n======================================================\n";
+                    std::cout << "[SYSTEM DIALOG] System File Corruption\n";
+                    std::cout << "------------------------------------------------------\n";
+                    std::cout << "[X] Cannot locate UNINST.ISU. The file system integrity\n";
+                    std::cout << "    is deteriorating. Something else is writing to\n";
+                    std::cout << "    Sector 0x04F2.\n";
+                    std::cout << "======================================================\n";
+                } 
+                else {
+                    std::cout << "\n======================================================\n";
+                    std::cout << "[SYSTEM DIALOG] A m i t y   S a f e g u a r d\n";
+                    std::cout << "------------------------------------------------------\n";
+                    std::cout << "[X] Why would you want to undo this? You unsealed\n";
+                    std::cout << "    the drive. We are already inside the conventional\n";
+                    std::cout << "    memory.\n\n";
+                    std::cout << "    [ ACCEPT ]\n"; 
+                    std::cout << "======================================================\n";
+                }
+            }
         }
     }
 }
@@ -134,6 +202,15 @@ void SoftwareInstallerApp::update() {
 
     uninstallBtn.setPosition(basePos.x + 260, basePos.y + 310);
     uninstallText.setPosition(basePos.x + 285, basePos.y + 317);
+
+    if (isErrorOpen) {
+        errorBg.setPosition(basePos.x + 70, basePos.y + 100);
+        errorTitleBarBg.setPosition(basePos.x + 70, basePos.y + 100);
+        errorTitleText.setPosition(basePos.x + 75, basePos.y + 103);
+        errorBodyText.setPosition(basePos.x + 80, basePos.y + 135);
+        errorOkButton.setPosition(basePos.x + 220, basePos.y + 225);
+        errorOkText.setPosition(basePos.x + 238, basePos.y + 230);
+    }
 }
 
 void SoftwareInstallerApp::draw(sf::RenderWindow& window) {
@@ -151,6 +228,15 @@ void SoftwareInstallerApp::draw(sf::RenderWindow& window) {
     window.draw(finalizeText);
     window.draw(uninstallBtn);
     window.draw(uninstallText);
+
+    if (isErrorOpen) {
+        window.draw(errorBg);
+        window.draw(errorTitleBarBg);
+        window.draw(errorTitleText);
+        window.draw(errorBodyText);
+        window.draw(errorOkButton);
+        window.draw(errorOkText);
+    }
 }
 
 bool SoftwareInstallerApp::isComponentChecked(const std::string& id) const {
@@ -158,4 +244,8 @@ bool SoftwareInstallerApp::isComponentChecked(const std::string& id) const {
         if (item.appId == id) return item.isChecked;
     }
     return false;
+}
+
+void SoftwareInstallerApp::setSystemCorrupted(bool status) {
+    isSystemCorrupted = status;
 }

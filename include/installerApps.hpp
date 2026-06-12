@@ -30,6 +30,9 @@ private:
     bool isSystemCorrupted = false;
 
     bool isErrorOpen = false;
+    bool isErrorDragged = false;
+    sf::Vector2f errorPopupPosition;
+    sf::Vector2f errorDragOffset;
     sf::RectangleShape errorBg;
     sf::RectangleShape errorTitleBarBg;
     sf::RectangleShape errorOkButton;
@@ -40,6 +43,7 @@ private:
 
 public:
     SoftwareInstallerApp();
+    bool getIsErrorOpen() const { return isErrorOpen; }
     
     void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override;
     void update() override;

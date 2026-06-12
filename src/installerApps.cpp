@@ -111,19 +111,44 @@ void SoftwareInstallerApp::createCheckbox(const std::string& labelText, const st
 }
 
 void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
-    VirtualWindow::handleEvent(event, window);
     if (!isOpen) return;
 
     if (isErrorOpen) {
+        sf::Vector2f mousePos;
+        if (event.type == sf::Event::MouseMoved) {
+            mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseMove.x, event.mouseMove.y));
+        } else if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::MouseButtonReleased) {
+            mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+        }
+
         if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-            sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
-            sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
             if (errorOkButton.getGlobalBounds().contains(mousePos)) {
                 isErrorOpen = false;
+            } else if (errorTitleBarBg.getGlobalBounds().contains(mousePos)) {
+                isErrorDragged = true;
+                errorDragOffset = mousePos - errorPopupPosition;
             }
         }
-        return; // Blokir interaksi ke background installer saat popup terbuka
+
+        if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+            isErrorDragged = false;
+        }
+
+        if (event.type == sf::Event::MouseMoved && isErrorDragged) {
+            mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseMove.x, event.mouseMove.y));
+            errorPopupPosition = mousePos - errorDragOffset;
+            if (errorPopupPosition.x < 0.f) errorPopupPosition.x = 0.f;
+            if (errorPopupPosition.y < 0.f) errorPopupPosition.y = 0.f;
+            if (errorPopupPosition.x + errorBg.getSize().x > window.getSize().x)
+                errorPopupPosition.x = window.getSize().x - errorBg.getSize().x;
+            if (errorPopupPosition.y + errorBg.getSize().y > window.getSize().y)
+                errorPopupPosition.y = window.getSize().y - errorBg.getSize().y;
+        }
+
+        return; // Block all installer window interaction while error popup is open
     }
+
+    VirtualWindow::handleEvent(event, window);
 
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
@@ -153,7 +178,9 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
         if (uninstallBtn.getGlobalBounds().contains(mousePos)) { 
             if (!isSystemCorrupted) {
                 //---------------- BEFORE INFECTION (UI POPUP) -----------------
-                isErrorOpen = true; 
+                isErrorOpen = true;
+                errorPopupPosition = windowFrame.getPosition() + sf::Vector2f(70.f, 100.f);
+                isErrorDragged = false;
             } 
             else {
                 //---------------- AFTER INFECTION (CONSOLE LOGIC FOR NOW) -----------------
@@ -204,12 +231,12 @@ void SoftwareInstallerApp::update() {
     uninstallText.setPosition(basePos.x + 285, basePos.y + 317);
 
     if (isErrorOpen) {
-        errorBg.setPosition(basePos.x + 70, basePos.y + 100);
-        errorTitleBarBg.setPosition(basePos.x + 70, basePos.y + 100);
-        errorTitleText.setPosition(basePos.x + 75, basePos.y + 103);
-        errorBodyText.setPosition(basePos.x + 80, basePos.y + 135);
-        errorOkButton.setPosition(basePos.x + 220, basePos.y + 225);
-        errorOkText.setPosition(basePos.x + 238, basePos.y + 230);
+        errorBg.setPosition(errorPopupPosition);
+        errorTitleBarBg.setPosition(errorPopupPosition);
+        errorTitleText.setPosition(errorPopupPosition.x + 5, errorPopupPosition.y + 3);
+        errorBodyText.setPosition(errorPopupPosition.x + 10, errorPopupPosition.y + 35);
+        errorOkButton.setPosition(errorPopupPosition.x + 150, errorPopupPosition.y + 125);
+        errorOkText.setPosition(errorPopupPosition.x + 172, errorPopupPosition.y + 130);
     }
 }
 

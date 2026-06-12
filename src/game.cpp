@@ -38,6 +38,11 @@ void Game::processEvents() {
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
+        if (installerWizard.getIsOpen() && installerWizard.getIsErrorOpen()) {
+            installerWizard.handleEvent(event, window);
+            continue;
+        }
+
         if (event.type == sf::Event::MouseButtonPressed) {
             std::string clickedApp = desktop.handleInput(pixelPos);
             
@@ -88,6 +93,11 @@ void Game::processEvents() {
         }
 
         //send events to windows, but prevent propagation through focused window
+        if (installerWizard.getIsOpen() && installerWizard.getIsErrorOpen()) {
+            installerWizard.handleEvent(event, window);
+            continue;
+        }
+
         if (notepad.getIsOpen()) {
             if (notepad.getHasFocus() || !clickOnFocusedWindow) {
                 notepad.handleEvent(event, window);

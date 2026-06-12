@@ -36,9 +36,11 @@ private:
     sf::RectangleShape errorBg;
     sf::RectangleShape errorTitleBarBg;
     sf::RectangleShape errorOkButton;
+    sf::RectangleShape errorCloseButton;
     sf::Text errorTitleText;
     sf::Text errorBodyText;
     sf::Text errorOkText;
+    sf::Text errorCloseText;
     void initErrorPopup();
 
 public:

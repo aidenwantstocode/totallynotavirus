@@ -84,6 +84,16 @@ void SoftwareInstallerApp::initErrorPopup() {
     errorOkText.setString("OK");
     errorOkText.setCharacterSize(12);
     errorOkText.setFillColor(sf::Color::Black);
+
+    errorCloseButton.setSize(sf::Vector2f(20.f, 20.f));
+    errorCloseButton.setFillColor(sf::Color(220, 220, 220));
+    errorCloseButton.setOutlineThickness(1.f);
+    errorCloseButton.setOutlineColor(sf::Color::Black);
+
+    errorCloseText.setFont(font);
+    errorCloseText.setString("X");
+    errorCloseText.setCharacterSize(12);
+    errorCloseText.setFillColor(sf::Color::Black);
 }
 
 void SoftwareInstallerApp::createCheckbox(const std::string& labelText, const std::string& id, float x, float y) {
@@ -124,6 +134,10 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
         if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
             if (errorOkButton.getGlobalBounds().contains(mousePos)) {
                 isErrorOpen = false;
+                std::cout << "[Installer] Error dialog OK clicked." << std::endl;
+            } else if (errorCloseButton.getGlobalBounds().contains(mousePos)) {
+                isErrorOpen = false;
+                std::cout << "[Installer] Error dialog close/X clicked." << std::endl;
             } else if (errorTitleBarBg.getGlobalBounds().contains(mousePos)) {
                 isErrorDragged = true;
                 errorDragOffset = mousePos - errorPopupPosition;
@@ -176,6 +190,7 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
         } 
         
         if (uninstallBtn.getGlobalBounds().contains(mousePos)) { 
+            std::cout << "[Installer] Uninstall button clicked." << std::endl;
             if (!isSystemCorrupted) {
                 //---------------- BEFORE INFECTION (UI POPUP) -----------------
                 isErrorOpen = true;
@@ -237,6 +252,8 @@ void SoftwareInstallerApp::update() {
         errorBodyText.setPosition(errorPopupPosition.x + 10, errorPopupPosition.y + 35);
         errorOkButton.setPosition(errorPopupPosition.x + 150, errorPopupPosition.y + 125);
         errorOkText.setPosition(errorPopupPosition.x + 172, errorPopupPosition.y + 130);
+        errorCloseButton.setPosition(errorPopupPosition.x + errorBg.getSize().x - 25, errorPopupPosition.y + 2);
+        errorCloseText.setPosition(errorPopupPosition.x + errorBg.getSize().x - 21, errorPopupPosition.y + 3);
     }
 }
 
@@ -263,6 +280,8 @@ void SoftwareInstallerApp::draw(sf::RenderWindow& window) {
         window.draw(errorBodyText);
         window.draw(errorOkButton);
         window.draw(errorOkText);
+        window.draw(errorCloseButton);
+        window.draw(errorCloseText);
     }
 }
 

@@ -111,9 +111,10 @@ void Game::processEvents() {
         if (installerWizard.getIsOpen()) {
             if (installerWizard.getHasFocus() || !clickOnFocusedWindow) {
                 installerWizard.handleEvent(event, window);
-                //safeguard (recalculate performance)
-                if (installerWizard.getIsFinalized() && systemDelayMultiplier == 1.0f) {
+                // Safeguard: recalculate once after finalization.
+                if (installerWizard.getIsFinalized() && !hasRecalculatedPerformance) {
                     recalculateSystemPerformance();
+                    hasRecalculatedPerformance = true;
                 }
             }
         }

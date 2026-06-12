@@ -21,6 +21,7 @@ private:
 
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;
+    bool hasRecalculatedPerformance = false;
     void recalculateSystemPerformance();
 
     void initWindow();

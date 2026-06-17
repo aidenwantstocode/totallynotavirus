@@ -7,9 +7,7 @@
 
 ### About The Game
 
-```
-"While scrambling to clean up things in your childhood home, you found a dusty, forgotten flash drive hidden beneath all the junk in your decrepit basement. Slightly hoping for potential childhood memories stored within the drive, you plug it into an aged family computer you haven't used since high-school, only to find out that the little flash drive isn't as harmless as you thought it was."
-```
+> "While scrambling to clean up things in your childhood home, you found a dusty, forgotten flash drive hidden beneath all the junk in your decrepit basement. Slightly hoping for potential childhood memories stored within the drive, you plug it into an aged family computer you haven't used since high-school, only to find out that the little flash drive isn't as harmless as you thought it was."
 
 ***TotallyNotAVirus*** is an interactive, OS Simulator style survival game heavily inspired by *KinitoPET* and *Welcome To The Game*. You will try to survive against certain *Corruptions* in an old Windows 98-style system, trying to preserve hidden encrypted data inside of an old, retaliating flash drive while fighting to keep your old computer alive.
 

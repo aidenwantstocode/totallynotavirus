@@ -15,7 +15,7 @@ private:
     NotepadApp notepad;
     TerminalApp terminal;
     SoftwareInstallerApp installerWizard;
-    
+    FileExplorerApp fileExplorer;
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;
 

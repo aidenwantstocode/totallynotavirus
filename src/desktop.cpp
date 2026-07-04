@@ -44,6 +44,7 @@ void Desktop::init(unsigned int width, unsigned int height) {
     createIcon("Terminal", "cmd", 40.0f, 130.0f);              // ID: cmd
     createIcon("system_log.txt", "txt_log", 40.0f, 220.0f);    // ID: txt_log
     createIcon("App Installer", "pkg_installer", 40.0f, 310.0f);    // ID: pkg_installer
+    createIcon("File Explorer", "file_explorer", 40.0f, 400.0f);    // ID: file_explorer
 }
 
 void Desktop::createIcon(const std::string& title, const std::string& id, float x, float y) {

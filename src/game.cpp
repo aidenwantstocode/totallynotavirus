@@ -18,10 +18,7 @@ void Game::initWindow() {
 void Game::run() {
     while (window.isOpen()) {
         processEvents();
-        
-        terminal.update();
-        notepad.update();
-        installerWizard.update();
+        update();
         
         installerWizard.setSystemCorrupted(isDriveRecoveryCorrupted);
         render();
@@ -78,6 +75,15 @@ void Game::processEvents() {
                 notepad.setHasFocus(false);
                 terminal.setHasFocus(false);
             }
+
+            else if (clickedApp == "file_explorer") {
+                fileExplorer.setIsOpen(true);
+                fileExplorer.setHasFocus(true);
+
+                notepad.setHasFocus(false);
+                terminal.setHasFocus(false);
+                installerWizard.setHasFocus(false);
+            }
         }
 
         //check if click is on the focused window - if so, block events to other windows
@@ -88,6 +94,8 @@ void Game::processEvents() {
             } else if (terminal.getHasFocus() && terminal.getIsOpen() && terminal.containsPoint(mousePos)) {
                 clickOnFocusedWindow = true;
             } else if (installerWizard.getHasFocus() && installerWizard.getIsOpen() && installerWizard.containsPoint(mousePos)) {
+                clickOnFocusedWindow = true;
+            } else if (fileExplorer.getHasFocus() && fileExplorer.getIsOpen() && fileExplorer.containsPoint(mousePos)) {
                 clickOnFocusedWindow = true;
             }
         }
@@ -118,6 +126,11 @@ void Game::processEvents() {
                 }
             }
         }
+        if (fileExplorer.getIsOpen()) {
+            if (fileExplorer.getHasFocus() || !clickOnFocusedWindow) {
+                fileExplorer.handleEvent(event, window);
+            }
+        }
         
         //ensure focus exclusivity - only one window can have focus
         if (notepad.getHasFocus() && terminal.getHasFocus()) {
@@ -126,8 +139,17 @@ void Game::processEvents() {
         if (notepad.getHasFocus() && installerWizard.getHasFocus()) {
             installerWizard.setHasFocus(false);
         }
+        if (notepad.getHasFocus() && fileExplorer.getHasFocus()) {
+            fileExplorer.setHasFocus(false);
+        }
         if (terminal.getHasFocus() && installerWizard.getHasFocus()) {
             installerWizard.setHasFocus(false);
+        }
+        if (terminal.getHasFocus() && fileExplorer.getHasFocus()) {
+            fileExplorer.setHasFocus(false);
+        }
+        if (installerWizard.getHasFocus() && fileExplorer.getHasFocus()) {
+            fileExplorer.setHasFocus(false);
         }
     }
 }
@@ -137,7 +159,50 @@ void Game::update() {
     notepad.update();
     terminal.update();
     installerWizard.update();
+    fileExplorer.update();
     glitchManager.update();
+
+    if (terminal.isRecoveryComplete()) {
+        isDriveRecoveryCorrupted = true;
+    }
+    fileExplorer.setBasementDriveVisible(isDriveRecoveryCorrupted);
+    
+    // Handle file explorer item activation
+    if (fileExplorer.isActivationRequested()) {
+        fileExplorer.clearActivationRequest();
+        std::string itemType = fileExplorer.getSelectedItemType();
+        std::string itemName = fileExplorer.getSelectedItemName();
+        std::string itemPath = fileExplorer.getSelectedItemPath();
+        
+        if (itemType == "txt") {
+            // Hardcoded file contents for system files
+            std::string content = "";
+            if (itemName == "todo_list.txt") {
+                content = "AMITY OS TASK LIST\n================\n\n1. Fix terminal buffer overflow\n2. Run drive recovery scan\n3. Patch memory leak in scheduler\n4. Investigate unauthorized access attempts";
+            } else if (itemName == "system_log.txt") {
+                content = "SYSTEM LOG - AMITY OS\n====================\n\n[WARNING] Sector 0x04F2 contains unidentified logic injection\n[ERROR] Authentication layer compromised\n[CRITICAL] Subsystem interference detected\n[INFO] Last boot: 23:41 GMT";
+            } else if (itemName == "readme.md") {
+                content = "# Amity Operating System\n\nWelcome to Amity OS - A revolutionary operating environment.\n\nThis file explorer serves as the hub for all system files and applications, much like a real Windows environment.\n\nDouble-click any item to open it with the appropriate application.";
+            } else if (itemName == "basement_key.txt") {
+                content = "BASEMENT ENCRYPTION KEY\n=======================\nKey: [F3-88B-A1]\n\nDo not share this key with anyone.";
+            } else if (itemName == "encrypted_data.bin") {
+                content = "01000100 01000101 01000011 01010010 01011001 01010000 01010100\n[ERROR: Buffer unaligned. Load decryption module abstractor]";
+            } else if (itemName == "memories.txt") {
+                content = "MEMORIES OF 1994\n================\n\nThis was the summer we built the computer in the basement.\nI still remember the hum of the CRT and the blinking drive light.";
+            }
+            
+            notepad.openFile(itemName, content);
+            notepad.setIsOpen(true);
+            notepad.setHasFocus(true);
+            fileExplorer.setHasFocus(false);
+        } else if (itemType == "installer") {
+            installerWizard.setIsOpen(true);
+            installerWizard.setHasFocus(true);
+            fileExplorer.setHasFocus(false);
+            notepad.setHasFocus(false);
+            terminal.setHasFocus(false);
+        }
+    }
 }
 
 void Game::render() {
@@ -145,19 +210,32 @@ void Game::render() {
     
     desktop.draw(window);
     
-    //draw windows in z-order (unfocused first, focused on top)
+    // draw windows in z-order (unfocused first, focused on top)
     if (installerWizard.getHasFocus() && installerWizard.getIsOpen()) {
         notepad.draw(window);
         terminal.draw(window);
+        fileExplorer.draw(window);
         installerWizard.draw(window);
-    } else if (notepad.getHasFocus()) {
+    } else if (fileExplorer.getHasFocus() && fileExplorer.getIsOpen()) {
+        notepad.draw(window);
         terminal.draw(window);
         installerWizard.draw(window);
+        fileExplorer.draw(window);
+    } else if (terminal.getHasFocus() && terminal.getIsOpen()) {
+        notepad.draw(window);
+        installerWizard.draw(window);
+        fileExplorer.draw(window);
+        terminal.draw(window);
+    } else if (notepad.getHasFocus() && notepad.getIsOpen()) {
+        terminal.draw(window);
+        installerWizard.draw(window);
+        fileExplorer.draw(window);
         notepad.draw(window);
     } else {
         notepad.draw(window);
         installerWizard.draw(window);
         terminal.draw(window);
+        fileExplorer.draw(window);
     }
     
     glitchManager.applyEffect(window);

@@ -8,6 +8,82 @@ Game::Game() {
     notepad.setHasFocus(true);
     terminal.setHasFocus(false);
     systemDelayMultiplier = 1.0f;
+
+    currentState = GameState::BootSequence;
+    bootDuration = 5.0f;
+    usbTriggerDelay = 10.0f;
+    usbPluggedIn = false;
+    
+    if (!systemFont.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
+        std::cerr << "[ERROR] Game FAILED TO LOAD FONT\n";
+    }
+
+    // Boot UI
+    biosText.setFont(systemFont);
+    biosText.setCharacterSize(14);
+    biosText.setFillColor(sf::Color::White);
+    biosText.setPosition(10.f, 10.f);
+    biosText.setString("AMITY OS BIOS v1.02\nCPU: Amity DX4 100MHz\nRAM: 640KB OK\nChecking IDE Drives...\nOK.\n\nLoading OS...");
+
+    bootProgressBarBackground.setSize(sf::Vector2f(400.f, 20.f));
+    bootProgressBarBackground.setFillColor(sf::Color(100, 100, 100));
+    bootProgressBarBackground.setPosition((SCREEN_WIDTH - 400.f) / 2.f, SCREEN_HEIGHT - 100.f);
+    bootProgressBarBackground.setOutlineThickness(2.f);
+    bootProgressBarBackground.setOutlineColor(sf::Color::White);
+
+    bootProgressBar.setSize(sf::Vector2f(0.f, 20.f));
+    bootProgressBar.setFillColor(sf::Color(0, 0, 128));
+    bootProgressBar.setPosition(bootProgressBarBackground.getPosition());
+
+    // USB Popup UI
+    usbPopupFrame.setSize(sf::Vector2f(350.f, 150.f));
+    usbPopupFrame.setFillColor(sf::Color(192, 192, 192));
+    usbPopupFrame.setOutlineThickness(2.f);
+    usbPopupFrame.setOutlineColor(sf::Color::White);
+    usbPopupFrame.setPosition((SCREEN_WIDTH - 350.f) / 2.f, (SCREEN_HEIGHT - 150.f) / 2.f);
+
+    usbPopupTitleBar.setSize(sf::Vector2f(350.f, 22.f));
+    usbPopupTitleBar.setFillColor(sf::Color(0, 0, 128));
+    usbPopupTitleBar.setPosition(usbPopupFrame.getPosition());
+
+    usbPopupTitleText.setFont(systemFont);
+    usbPopupTitleText.setString("New Hardware Detected");
+    usbPopupTitleText.setCharacterSize(12);
+    usbPopupTitleText.setFillColor(sf::Color::White);
+    usbPopupTitleText.setStyle(sf::Text::Bold);
+    usbPopupTitleText.setPosition(usbPopupTitleBar.getPosition().x + 5.f, usbPopupTitleBar.getPosition().y + 3.f);
+
+    usbPopupBodyText.setFont(systemFont);
+    usbPopupBodyText.setString("Removable Disk (D:) has been attached.\nDo you wish to initialize and mount the drive?");
+    usbPopupBodyText.setCharacterSize(11);
+    usbPopupBodyText.setFillColor(sf::Color::Black);
+    usbPopupBodyText.setPosition(usbPopupFrame.getPosition().x + 10.f, usbPopupFrame.getPosition().y + 40.f);
+
+    usbAcceptButton.setSize(sf::Vector2f(100.f, 25.f));
+    usbAcceptButton.setFillColor(sf::Color(192, 192, 192));
+    usbAcceptButton.setOutlineThickness(1.5f);
+    usbAcceptButton.setOutlineColor(sf::Color(100, 100, 100));
+    usbAcceptButton.setPosition(usbPopupFrame.getPosition().x + 50.f, usbPopupFrame.getPosition().y + 100.f);
+
+    usbAcceptText.setFont(systemFont);
+    usbAcceptText.setString("Mount");
+    usbAcceptText.setCharacterSize(12);
+    usbAcceptText.setFillColor(sf::Color::Black);
+    usbAcceptText.setPosition(usbAcceptButton.getPosition().x + 30.f, usbAcceptButton.getPosition().y + 5.f);
+
+    usbCancelButton.setSize(sf::Vector2f(100.f, 25.f));
+    usbCancelButton.setFillColor(sf::Color(192, 192, 192));
+    usbCancelButton.setOutlineThickness(1.5f);
+    usbCancelButton.setOutlineColor(sf::Color(100, 100, 100));
+    usbCancelButton.setPosition(usbPopupFrame.getPosition().x + 200.f, usbPopupFrame.getPosition().y + 100.f);
+
+    usbCancelText.setFont(systemFont);
+    usbCancelText.setString("Cancel");
+    usbCancelText.setCharacterSize(12);
+    usbCancelText.setFillColor(sf::Color::Black);
+    usbCancelText.setPosition(usbCancelButton.getPosition().x + 28.f, usbCancelButton.getPosition().y + 5.f);
+
+    stateClock.restart();
 }
 
 void Game::initWindow() {
@@ -34,6 +110,25 @@ void Game::processEvents() {
 
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+
+        if (currentState == GameState::HardwarePrompt) {
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                if (usbAcceptButton.getGlobalBounds().contains(mousePos)) {
+                    currentState = GameState::ActiveOS;
+                } else if (usbCancelButton.getGlobalBounds().contains(mousePos)) {
+                    currentState = GameState::HardwareCancelSequence;
+                    usbPopupTitleText.setString("FATAL ERROR");
+                    usbPopupBodyText.setString("Cannot unmount. Device is already corrupted.\nSystem stability compromised.");
+                    usbPopupBodyText.setFillColor(sf::Color::Red);
+                    stateClock.restart();
+                }
+            }
+            continue; // Block all other events during hardware prompt
+        }
+
+        if (currentState != GameState::NormalOS && currentState != GameState::ActiveOS) {
+            continue; // Block events during boot sequence
+        }
 
         if (installerWizard.getIsOpen() && installerWizard.getIsErrorOpen()) {
             installerWizard.handleEvent(event, window);
@@ -155,6 +250,31 @@ void Game::processEvents() {
 }
 
 void Game::update() {
+    if (currentState == GameState::BootSequence) {
+        float elapsed = stateClock.getElapsedTime().asSeconds();
+        float progress = std::min(elapsed / bootDuration, 1.0f);
+        bootProgressBar.setSize(sf::Vector2f(progress * 400.f, 20.f));
+        
+        if (elapsed > bootDuration) {
+            currentState = GameState::NormalOS;
+            stateClock.restart();
+        }
+        return;
+    }
+
+    if (currentState == GameState::NormalOS) {
+        if (!usbPluggedIn && stateClock.getElapsedTime().asSeconds() > usbTriggerDelay) {
+            currentState = GameState::HardwarePrompt;
+            usbPluggedIn = true;
+        }
+    }
+
+    if (currentState == GameState::HardwareCancelSequence) {
+        if (stateClock.getElapsedTime().asSeconds() > 2.5f) {
+            window.close();
+        }
+    }
+
     desktop.update();
     notepad.update();
     terminal.update();
@@ -208,6 +328,15 @@ void Game::update() {
 void Game::render() {
     window.clear();
     
+    if (currentState == GameState::BootSequence) {
+        window.draw(biosText);
+        window.draw(bootProgressBarBackground);
+        window.draw(bootProgressBar);
+        glitchManager.applyEffect(window);
+        window.display();
+        return;
+    }
+
     desktop.draw(window);
     
     // draw windows in z-order (unfocused first, focused on top)
@@ -238,6 +367,20 @@ void Game::render() {
         fileExplorer.draw(window);
     }
     
+    if (currentState == GameState::HardwarePrompt || currentState == GameState::HardwareCancelSequence) {
+        window.draw(usbPopupFrame);
+        window.draw(usbPopupTitleBar);
+        window.draw(usbPopupTitleText);
+        window.draw(usbPopupBodyText);
+        
+        if (currentState == GameState::HardwarePrompt) {
+            window.draw(usbAcceptButton);
+            window.draw(usbAcceptText);
+            window.draw(usbCancelButton);
+            window.draw(usbCancelText);
+        }
+    }
+
     glitchManager.applyEffect(window);
 
     window.display();

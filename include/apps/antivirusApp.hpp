@@ -29,6 +29,9 @@ public:
     void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override;
 
     float getProtectionLevel() const;
+    bool isFileShieldActive() const;
+    bool isActiveMonitorActive() const;
+    bool isMemoryFirewallActive() const;
 };
 
 #endif

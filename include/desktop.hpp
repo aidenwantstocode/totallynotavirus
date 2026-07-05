@@ -23,13 +23,19 @@ private:
 
     std::vector<DesktopIcon> desktopIcons;
 
+    int draggedIconIndex = -1;
+    sf::Vector2f dragOffset;
+    sf::Clock doubleClickTimer;
+    int lastClickedIconIndex = -1;
+
     void updateClock();
+    void snapToGrid(DesktopIcon& icon);
 
 public:
     Desktop();
     void init(unsigned int width, unsigned int height);
     
-    std::string handleInput(sf::Vector2i mousePos);
+    std::string handleEvent(const sf::Event& event, const sf::RenderWindow& window);
     
     void update();
     void draw(sf::RenderWindow& window);

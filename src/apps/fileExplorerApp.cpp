@@ -1,175 +1,6 @@
+#include "apps/fileExplorerApp.hpp"
 #include <iostream>
-#include "coreApps.hpp"
 
-//NOTEPAD APP
-
-NotepadApp::NotepadApp() : VirtualWindow("Notepad", 450, 350) {
-    isOpen = false;
-    windowFrame.setFillColor(sf::Color(255, 255, 255)); 
-
-    if (!font.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
-        std::cerr << "[ERROR] NotepadApp FAILED TO LOAD FONT\n";
-    }
-
-    contentText.setFont(font);
-    contentText.setCharacterSize(12);
-    contentText.setFillColor(sf::Color(50, 50, 50));
-    contentText.setLineSpacing(1.2f);
-    contentText.setString("");
-}
-
-//Dynamic function for opening files in notepad with different content based on filename
-void NotepadApp::openFile(const std::string& filename, const std::string& content) {
-    titleText.setString("Notepad - " + filename);
-    
-    std::string wrappedContent;
-    std::string currentLine;
-    float maxWidth = windowFrame.getSize().x - 30.f;
-    
-    // Simple word wrapping
-    size_t pos = 0;
-    while (pos < content.length()) {
-        size_t spacePos = content.find_first_of(" \n", pos);
-        if (spacePos == std::string::npos) spacePos = content.length();
-        
-        std::string word = content.substr(pos, spacePos - pos);
-        char delimiter = (spacePos < content.length()) ? content[spacePos] : ' ';
-        
-        sf::Text testText = contentText;
-        testText.setString(currentLine + (currentLine.empty() ? "" : " ") + word);
-        if (testText.getLocalBounds().width > maxWidth && !currentLine.empty()) {
-            wrappedContent += currentLine + "\n";
-            currentLine = word;
-        } else {
-            currentLine += (currentLine.empty() ? "" : " ") + word;
-        }
-        
-        if (delimiter == '\n') {
-            wrappedContent += currentLine + "\n";
-            currentLine = "";
-        }
-        
-        pos = spacePos + 1;
-    }
-    if (!currentLine.empty()) wrappedContent += currentLine;
-
-    contentText.setString(wrappedContent);
-    isOpen = true;
-    hasFocus = true;
-}
-
-void NotepadApp::update() {
-    VirtualWindow::update(); 
-    if (isOpen) {
-        contentText.setPosition(windowFrame.getPosition().x + 15, windowFrame.getPosition().y + 45);
-    }
-}
-
-void NotepadApp::draw(sf::RenderWindow& window) {
-    VirtualWindow::draw(window); 
-    if (isOpen) {
-        window.draw(contentText);
-    }
-}
-
-//TERMINAL APP
-
-TerminalApp::TerminalApp() : VirtualWindow("Terminal", 520, 380) {
-    isOpen = false; 
-    windowFrame.setFillColor(sf::Color::Black);
-    titleBar.setFillColor(sf::Color(45, 45, 45));
-
-    if (!font.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
-        std::cerr << "[ERROR] TerminalApp failed to load font.\n";
-    }
-
-    terminalText.setFont(font);
-    terminalText.setCharacterSize(12);
-    terminalText.setFillColor(sf::Color(255, 255, 255));
-    terminalText.setLineSpacing(1.1f);
-
-    commandHistory = "Amity Operating System [build 13a94]\n(c) Marrow Computers 1994. All rights reserved.\n\nC:\\> ";
-    currentInput = "";
-    terminalText.setString(commandHistory + currentInput);
-}
-
-void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
-    VirtualWindow::handleEvent(event, window);
-
-    if (!isOpen) return;
-
-    if (event.type == sf::Event::TextEntered) {
-        
-        if (event.text.unicode == 8) {
-            if (!currentInput.empty()) {
-                currentInput.pop_back();
-            }
-        }
-        else if (event.text.unicode == 13 || event.text.unicode == 10) {
-            if (currentInput == "help") {
-                commandHistory += currentInput + "\nAvailable commands:\n  help   - Show documentation\n  status - Check virtual OS integrity\n  clear  - Clear screen buffer\n\nC:\\> ";
-            } 
-            else if (currentInput == "clear") {
-                commandHistory = "Amity Operating System [build 13a94]\n(c) Marrow Computers 1994. All rights reserved.\n\nC:\\> ";
-            } 
-            else if (currentInput == "status") {
-                commandHistory += currentInput + "\n[SYSTEM STATUS]: INTEGRITY SECURE\n[FIREWALL]: SHIELD ACTIVE (100%)\n\nC:\\> ";
-            } 
-            else if (currentInput == "recover") {
-                isProcessing = true;
-                requiredProcessingTime = 3.0f * delayMultiplier;    //3 second standard delay, multiplied by apps modifier
-                processingClock.restart();
-                commandHistory += "\n[SYSTEM] Initiating Drive Recovery Tool...";
-                commandHistory += "\n[SYSTEM] Please wait, processing clusters...\n";
-            }
-            else if (!currentInput.empty()) {
-                commandHistory += currentInput + "\n'" + currentInput + "' is not recognized as an internal or external command.\n\nC:\\> ";
-            } 
-            else {
-                commandHistory += "\nC:\\> ";
-            }
-            currentInput = "";
-        }
-        else if (event.text.unicode < 128 && event.text.unicode >= 32) {
-            currentInput += static_cast<char>(event.text.unicode);
-        }
-
-        terminalText.setString(commandHistory + currentInput);
-    }
-}
-
-void TerminalApp::update() {
-    VirtualWindow::update();
-    if (isOpen) {
-        terminalText.setPosition(windowFrame.getPosition().x + 12, windowFrame.getPosition().y + 40);
-    }
-    if (isProcessing) {
-        if (processingClock.getElapsedTime().asSeconds() >= requiredProcessingTime) {
-            isProcessing = false;
-            recoveryComplete = true;
-            commandHistory += "\n[SUCCESS] Sector 0x04F2 recovered successfully!";
-            commandHistory += "\nAmityOS Key: [A1-99X-E9]\n";
-            terminalText.setString(commandHistory + currentInput);
-        }
-    }
-}
-
-void TerminalApp::draw(sf::RenderWindow& window) {
-    VirtualWindow::draw(window);
-    if (isOpen) {
-        window.draw(terminalText);
-    }
-}
-
-void TerminalApp::setDelayMultiplier(float multiplier) {
-    delayMultiplier = multiplier;
-}
-
-bool TerminalApp::isRecoveryComplete() const {
-    return recoveryComplete;
-}
-
-// FILE EXPLORER APP
 FileExplorerApp::FileExplorerApp() : VirtualWindow("File Explorer", 500, 400) {
     isOpen = false;
     selectedIndex = -1;
@@ -244,10 +75,13 @@ void FileExplorerApp::loadFileSystem() {
         {"Desktop", "C:\\Desktop", "folder", true, {
             {"todo_list.txt", "C:\\Desktop\\todo_list.txt", "txt", false, {}},
             {"system_log.txt", "C:\\Desktop\\system_log.txt", "txt", false, {}},
-            {"readme.md", "C:\\Desktop\\readme.md", "txt", false, {}},
-            {"amityappsetup.exe", "C:\\Desktop\\amityappsetup.exe", "installer", false, {}}
+            {"readme.md", "C:\\Desktop\\readme.md", "txt", false, {}}
         }},
-        {"sys", "C:\\sys", "folder", true, {}},
+        {"sys", "C:\\sys", "folder", true, {
+            {"drivers", "C:\\sys\\drivers", "folder", true, {
+                {"recovery_guide.txt", "C:\\sys\\drivers\\recovery_guide.txt", "txt", false, {}}
+            }}
+        }},
         {"Program Files", "C:\\Program Files", "folder", true, {}},
         {"Amity", "C:\\Amity", "folder", true, {}}
     };
@@ -449,6 +283,19 @@ std::string FileExplorerApp::getParentPath(const std::string& path) const {
         return "C:\\";
     }
     return path.substr(0, pos);
+}
+
+void FileExplorerApp::addFileToDesktop(const std::string& filename, const std::string& type) {
+    for (auto& entry : fileSystem) {
+        if (entry.path == "C:\\Desktop") {
+            entry.children.push_back({filename, "C:\\Desktop\\" + filename, type, false, {}});
+            if (currentPath == "C:\\Desktop" || currentPath == "C:\\") {
+                refreshVisibleItems();
+                updateLayout();
+            }
+            break;
+        }
+    }
 }
 
 void FileExplorerApp::navigateUp() {

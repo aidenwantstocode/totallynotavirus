@@ -1,7 +1,7 @@
-#include "installerApps.hpp"
+#include "apps/softwareInstallerApp.hpp"
 #include <iostream>
 
-SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("Amity Package Manager v1.0", 500, 380) {
+SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("App Installer", 450, 400) {
     isOpen = false;
     isFinalized = false;
     windowFrame.setFillColor(sf::Color(192, 192, 192));

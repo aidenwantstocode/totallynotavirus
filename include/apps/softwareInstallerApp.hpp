@@ -1,6 +1,5 @@
-#ifndef INSTALLER_APPS_HPP
-#define INSTALLER_APPS_HPP
-
+#ifndef SOFTWARE_INSTALLER_APP_HPP
+#define SOFTWARE_INSTALLER_APP_HPP
 #include "virtualWindow.hpp"
 #include <vector>
 #include <string>

@@ -1,56 +1,8 @@
-#ifndef APPS_HPP
-#define APPS_HPP
-
+#ifndef FILE_EXPLORER_APP_HPP
+#define FILE_EXPLORER_APP_HPP
 #include "virtualWindow.hpp"
-#include <string>
 #include <vector>
-
-//notepad app
-class NotepadApp : public VirtualWindow {
-private:
-    sf::Font font;
-    sf::Text contentText;
-
-public:
-    NotepadApp();
-    void openFile(const std::string& filename, const std::string& content);
-    void update() override;
-    void draw(sf::RenderWindow& window) override;
-};
-
-//terminal/cmd virus app
-class TerminalApp : public VirtualWindow {
-private:
-    sf::Font font;
-    sf::Text terminalText;
-    std::string commandHistory;
-    std::string currentInput;
-
-    float delayMultiplier = 1.0f;
-    bool isProcessing = false;
-    sf::Clock processingClock;
-    float requiredProcessingTime = 0.0f;
-    bool recoveryComplete = false;
-
-public:
-    TerminalApp();
-    void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override;
-    void update() override;
-    void draw(sf::RenderWindow& window) override;
-    void setDelayMultiplier(float multiplier);
-    bool isRecoveryComplete() const;
-};
-
-class DriveRecoveryApp : public VirtualWindow {
-private:
-    sf::Font font;
-    sf::Text statusText;
-
-public:
-    DriveRecoveryApp();
-    void update() override;
-    void draw(sf::RenderWindow& window) override;
-};
+#include <string>
 
 struct FileEntry {
     std::string name;
@@ -113,6 +65,7 @@ public:
     bool isActivationRequested() const { return activationRequested; }
     void clearActivationRequest() { activationRequested = false; }
     void setBasementDriveVisible(bool visible);
+    void addFileToDesktop(const std::string& filename, const std::string& type);
 };
 
 #endif

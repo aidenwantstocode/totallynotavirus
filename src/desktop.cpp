@@ -270,3 +270,12 @@ void Desktop::setMetrics(float cpu, float ram, float temp, bool show) {
         }
     }
 }
+
+sf::Vector2f Desktop::getIconPosition(const std::string& appId) const {
+    for (const auto& icon : desktopIcons) {
+        if (icon.appId == appId) {
+            return icon.body.getPosition();
+        }
+    }
+    return sf::Vector2f(200.f, 200.f);
+}

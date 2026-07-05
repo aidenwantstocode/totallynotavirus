@@ -42,6 +42,7 @@ public:
     void init(unsigned int width, unsigned int height);
     void createIcon(const std::string& title, const std::string& id);
     void removeIcon(const std::string& id);
+    sf::Vector2f getIconPosition(const std::string& appId) const;
     
     std::string handleEvent(const sf::Event& event, const sf::RenderWindow& window);
     

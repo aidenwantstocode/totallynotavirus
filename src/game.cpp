@@ -204,9 +204,11 @@ void Game::processEvents() {
         bool desktopIconClicked = false;
         VirtualWindow* forcedFocusWindow = nullptr;
         std::string clickedApp = desktop.handleEvent(event, window);
+        sf::Vector2f iconPos(-1.f, -1.f);
         
         if (!clickedApp.empty()) {
             desktopIconClicked = true;
+            iconPos = desktop.getIconPosition(clickedApp);
             if (clickedApp == "txt_todo") {
                 notepad.openFile("todo_list.txt", 
                     "AMITY OS SYSTEM LOG - TODO LIST\n"
@@ -259,7 +261,7 @@ void Game::processEvents() {
             }
         }
 
-        windowManager.processWindowEvents(event, window, desktopIconClicked, forcedFocusWindow);
+        windowManager.processWindowEvents(event, window, desktopIconClicked, forcedFocusWindow, iconPos);
     }
 }
 
@@ -268,6 +270,25 @@ void Game::update() {
         float elapsed = stateClock.getElapsedTime().asSeconds();
         float progress = std::min(elapsed / bootDuration, 1.0f);
         bootProgressBar.setSize(sf::Vector2f(progress * 400.f, 20.f));
+
+        if (isNextBootCorrupted) {
+            std::string msg = "Booting AmityOS (Safe Mode)...";
+            if (progress >= 0.70f) {
+                for (size_t i = 0; i < msg.length(); ++i) {
+                    if (msg[i] != ' ' && msg[i] != '(' && msg[i] != ')' && msg[i] != '.' && (rand() % 4 == 0)) {
+                        char symbols[] = {'0', '!', '@', '#', '$', '%', '&', '*', '3', '7', '1', '?'};
+                        msg[i] = symbols[rand() % 12];
+                    }
+                }
+            }
+            biosText.setString("AMITY SYSTEM DIAGNOSTICS\n"
+                               "========================\n"
+                               "CPU: Marrow 486 DX2\n"
+                               "RAM: 640KB Conventional / 64MB Extended\n\n"
+                               "Status: " + msg);
+        } else {
+            biosText.setString("AMITY OS BIOS v1.02\nCPU: Amity DX4 100MHz\nRAM: 640KB OK\nChecking IDE Drives...\nOK.\n\nLoading OS...");
+        }
         
         if (elapsed > bootDuration) {
             if (isNextBootCorrupted) {
@@ -336,43 +357,64 @@ void Game::update() {
     if (dt > 0.1f) dt = 0.1f;
 
     if (currentState == GameState::NormalOS || currentState == GameState::ActiveOS || currentState == GameState::CorruptedOS) {
-        float activeRam = 10.f;
-        bool healthActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("health_monitor");
-        bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
-        bool defragActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("abstractor");
-
-        if (healthActive) activeRam += 10.f;
-        if (antivirusActive) {
-            activeRam += 5.f + (antivirusApp.getProtectionLevel() * 10.f);
-        }
-        if (defragActive) {
-            activeRam += 15.f;
-            if (defragApp.getIsDefragmenting()) {
-                activeRam += 10.f;
-            }
-        }
-        activeRam += fileExplorer.countCorruptedFiles() * 5.f;
-
-        if (terminal.getIsOpen()) activeRam += 10.f;
-        if (fileExplorer.getIsOpen()) activeRam += 10.f;
+        float activeRam = 15.f;
+        if (terminal.getIsOpen()) activeRam += 5.f;
+        if (fileExplorer.getIsOpen()) activeRam += 5.f;
         if (notepad.getIsOpen()) activeRam += 5.f;
-        if (driveRecovery.getIsOpen()) activeRam += 15.f;
-        if (settingsApp.getIsOpen()) activeRam += 10.f;
+        if (driveRecovery.getIsOpen()) activeRam += 5.f;
+        if (settingsApp.getIsOpen()) activeRam += 5.f;
+        if (antivirusApp.getIsOpen()) activeRam += 5.f;
+        if (defragApp.getIsOpen()) activeRam += 5.f;
+
+        float leakCost = antivirusApp.isMemoryFirewallActive() ? 5.f : 10.f;
+        activeRam += fileExplorer.countCorruptedFiles() * leakCost;
 
         ramUtil = activeRam;
-        if (ramUtil > 100.f) ramUtil = 100.f;
+        if (ramUtil >= 100.f) {
+            ramUtil = 100.f;
+            std::cout << "[OS Engine] RAM Overflow! Instant crash.\n";
+            currentState = GameState::BSOD;
+            bsodClock.restart();
+
+            installerWizard.setIsOpen(false);
+            fileExplorer.setIsOpen(false);
+            terminal.setIsOpen(false);
+            notepad.setIsOpen(false);
+            settingsApp.setIsOpen(false);
+            driveRecovery.setIsOpen(false);
+            antivirusApp.setIsOpen(false);
+            defragApp.setIsOpen(false);
+            activePopups.clear();
+            return;
+        }
+
+        // Configure static RAM lag multiplier
+        VirtualWindow::ramLagMultiplier = 1.0f + (ramUtil / 10.f);
 
         float activeCpu = 10.f;
         if (terminal.getIsOpen()) activeCpu += 5.f;
         if (fileExplorer.getIsOpen()) activeCpu += 5.f;
         if (notepad.getIsOpen()) activeCpu += 2.f;
         if (driveRecovery.getIsOpen() && driveRecovery.getIsRunning()) activeCpu += 15.f;
+        
+        bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
+        bool defragActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("abstractor");
+        bool healthActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("health_monitor");
+
         if (antivirusActive) {
-            activeCpu += 5.f + (antivirusApp.getProtectionLevel() * 10.f);
+            activeCpu += 5.f;
+            if (antivirusApp.isFileShieldActive() || antivirusApp.isActiveMonitorActive() || antivirusApp.isMemoryFirewallActive()) {
+                activeCpu += 10.f;
+            }
         }
-        if (defragActive && defragApp.getIsDefragmenting()) {
-            activeCpu += 30.f;
+        if (defragActive) {
+            activeCpu += 5.f;
+            if (defragApp.getIsDefragmenting()) {
+                activeCpu += 30.f;
+            }
         }
+
+        activeCpu += activePopups.size() * 6.f;
 
         cpuUtil = activeCpu;
         if (cpuUtil > 100.f) cpuUtil = 100.f;
@@ -400,26 +442,80 @@ void Game::update() {
 
         updatePopups(dt);
 
+        // Reconciliation of desktop shortcuts
+        std::vector<std::string> vfsDesktopNames = fileExplorer.getDesktopFileNames();
+        static std::vector<std::string> spawnedLeaks;
+        auto leakIt = spawnedLeaks.begin();
+        while (leakIt != spawnedLeaks.end()) {
+            bool found = false;
+            for (const auto& name : vfsDesktopNames) {
+                if (name == *leakIt) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                desktop.removeIcon("file_" + *leakIt);
+                leakIt = spawnedLeaks.erase(leakIt);
+            } else {
+                ++leakIt;
+            }
+        }
+
+        // Terminal puzzle unlocks
+        if (terminal.checkAndClearRegsync()) {
+            driveRecovery.unlockSector(2);
+            // Spawn sect1.txt so player gets confirmation
+            fileExplorer.addFileToFolder("C:\\sys", "sect1.txt", "txt");
+        }
+        if (terminal.checkAndClearFat32()) {
+            driveRecovery.unlockSector(3);
+            // Spawn sect2.txt so player gets confirmation
+            fileExplorer.addFileToFolder("C:\\sys", "sect2.txt", "txt");
+        }
+        if (driveRecovery.getCurrentSector() == 4 && driveRecovery.isSectorLocked() && defragApp.checkAndClearCleanRequest()) {
+            driveRecovery.unlockSector(4);
+            // Allow cleaning memory leaks as normal
+            std::cout << "[OS Kernel] Memory Abstractor optimized heap. Cleaning memory leaks...\n";
+            fileExplorer.clearCorruptedFiles();
+        }
+        if (terminal.checkAndClearSafe()) {
+            driveRecovery.unlockSector(5);
+        }
+
+        // Sector Checkpoints & Wave triggers
         if (driveRecovery.isWaveActive() && currentWave == 0) {
             float progress = driveRecovery.getProgress();
-            if (progress >= 33.f && progress < 35.f) {
+            if (progress >= 20.f && progress < 22.f) {
                 currentWave = 1;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 1 started!\n";
-            } else if (progress >= 66.f && progress < 68.f) {
+            } else if (progress >= 40.f && progress < 42.f) {
                 currentWave = 2;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 2 started!\n";
-            } else if (progress >= 85.f && progress < 87.f) {
+            } else if (progress >= 60.f && progress < 62.f) {
                 currentWave = 3;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 3 started!\n";
+            } else if (progress >= 80.f && progress < 82.f) {
+                currentWave = 4;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 4 started!\n";
+            } else if (progress >= 100.f) {
+                currentWave = 5;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Final Wave 5 started!\n";
             }
         }
 
@@ -430,7 +526,13 @@ void Game::update() {
 
             float popupInterval = 3.5f;
             if (currentWave == 2) popupInterval = 2.0f;
-            if (currentWave == 3) popupInterval = 1.2f;
+            if (currentWave == 3) popupInterval = 1.5f;
+            if (currentWave == 4) popupInterval = 1.0f;
+            if (currentWave == 5) popupInterval = 0.8f;
+
+            if (antivirusApp.isActiveMonitorActive()) {
+                popupInterval *= 2.0f; 
+            }
 
             if (popupSpawnTimer <= 0.f) {
                 spawnPopup();
@@ -440,11 +542,19 @@ void Game::update() {
             float fileInterval = 4.5f;
             if (currentWave == 2) fileInterval = 3.0f;
             if (currentWave == 3) fileInterval = 2.0f;
+            if (currentWave == 4) fileInterval = 1.5f;
+            if (currentWave == 5) fileInterval = 1.0f;
+
+            if (antivirusApp.isFileShieldActive()) {
+                fileInterval *= 2.0f;
+            }
 
             if (fileSpawnTimer <= 0.f) {
                 static int leakIndex = 0;
                 std::string filename = "leak_" + std::to_string(leakIndex++) + ".sys";
-                fileExplorer.addFileToDesktop(filename, "txt");
+                fileExplorer.addFileToFolder("C:\\Desktop", filename, "txt");
+                desktop.createIcon(filename, "file_" + filename);
+                spawnedLeaks.push_back(filename);
                 std::cout << "[Virus Wave] Created corrupted file: " << filename << " on desktop\n";
                 fileSpawnTimer = fileInterval;
             }
@@ -452,13 +562,18 @@ void Game::update() {
             if (waveTimer <= 0.f) {
                 std::cout << "[Virus Wave] Wave " << currentWave << " survived!\n";
                 activePopups.clear();
-                
+
                 if (currentWave == 1) {
-                    driveRecovery.triggerNextWave(1, 66.f);
+                    driveRecovery.triggerNextWave(1, 40.f);
                 } else if (currentWave == 2) {
-                    driveRecovery.triggerNextWave(2, 85.f);
+                    driveRecovery.triggerNextWave(2, 60.f);
                 } else if (currentWave == 3) {
-                    driveRecovery.triggerNextWave(3, 100.f);
+                    driveRecovery.triggerNextWave(3, 80.f);
+                } else if (currentWave == 4) {
+                    driveRecovery.triggerNextWave(4, 100.f);
+                } else if (currentWave == 5) {
+                    driveRecovery.setWaveActive(false);
+                    std::cout << "[OS Engine] Sector 5 scanned! Diagnostics complete!\n";
                 }
                 currentWave = 0;
             }
@@ -492,6 +607,17 @@ void Game::update() {
     }
 
     if (currentState == GameState::NormalOS) {
+        if (systemLogsSpawnTimer < 0.f) {
+            systemLogsSpawnTimer = 15.f;
+        }
+        if (systemLogsSpawnTimer > 0.f) {
+            systemLogsSpawnTimer -= dt;
+            if (systemLogsSpawnTimer <= 0.f) {
+                fileExplorer.addFileToFolder("C:\\", "system_log.txt", "txt");
+                std::cout << "[OS Kernel] Spawned system_log.txt after mount delay.\n";
+            }
+        }
+
         if (!usbPluggedIn && stateClock.getElapsedTime().asSeconds() > usbTriggerDelay) {
             currentState = GameState::HardwarePrompt;
             usbPluggedIn = true;
@@ -553,7 +679,11 @@ void Game::update() {
             } else if (itemName == "encrypted_data.bin") {
                 content = "01000100 01000101 01000011 01010010 01011001 01010000 01010100\n[ERROR: Buffer unaligned. Load decryption module abstractor]";
             } else if (itemName == "memories.txt") {
-                content = "MEMORIES OF 1994\n================\n\nThis was the summer we built the computer in the basement.\nI still remember the hum of the CRT and the blinking drive light.";
+                content = "MEMORIES OF 1994\n================\n\nThis was the summer we built the computer in the basement.\nI still remember the hum of the CRT and the blinking drive light.\nMarrow computers were built to last.\nMarrow is everything. Marrow represents conventional abstractors.\nWe are marrow.";
+            } else if (itemName == "sect1.txt") {
+                content = "SECTOR 1 DIAGNOSTIC LOG\n=======================\nRegistry mapping mismatched in Sector 2.\n\nTo align registry allocations, type 'regsync' inside the Terminal.";
+            } else if (itemName == "sect2.txt") {
+                content = "SECTOR 2 DIAGNOSTIC LOG\n=======================\nFAT32 checksum mismatch in Sector 3.\n\nUnlock command parameters: unlock FAT32 <key>.\nThe key is the case-insensitive occurrence count of the word 'marrow' in the file memories.txt in basement drive D:.";
             }
             
             notepad.openFile(itemName, content);

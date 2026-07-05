@@ -5,8 +5,17 @@ void WindowManager::addWindow(VirtualWindow* window) {
     windowStack.push_back(window);
 }
 
-void WindowManager::bringToFront(VirtualWindow* windowToFocus) {
+void WindowManager::bringToFront(VirtualWindow* windowToFocus, sf::Vector2f iconPos) {
     if (!windowToFocus) return;
+
+    if (!windowToFocus->getIsOpen()) {
+        sf::Vector2f startPos = iconPos;
+        if (startPos.x < 0.f && startPos.y < 0.f) {
+            startPos = windowToFocus->getPosition() + windowToFocus->getSize() / 2.f;
+        }
+        windowToFocus->triggerOpenAnimation(startPos);
+    }
+
     auto it = std::find(windowStack.begin(), windowStack.end(), windowToFocus);
     if (it != windowStack.end()) {
         windowStack.erase(it);
@@ -21,7 +30,7 @@ void WindowManager::bringToFront(VirtualWindow* windowToFocus) {
     windowToFocus->setHasFocus(true);
 }
 
-void WindowManager::processWindowEvents(const sf::Event& event, const sf::RenderWindow& window, bool desktopIconClicked, VirtualWindow* forcedFocusWindow) {
+void WindowManager::processWindowEvents(const sf::Event& event, const sf::RenderWindow& window, bool desktopIconClicked, VirtualWindow* forcedFocusWindow, sf::Vector2f iconPos) {
     sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
@@ -43,7 +52,7 @@ void WindowManager::processWindowEvents(const sf::Event& event, const sf::Render
     }
 
     if (forcedFocusWindow) {
-        bringToFront(forcedFocusWindow);
+        bringToFront(forcedFocusWindow, iconPos);
     }
 
     for (auto it = windowStack.rbegin(); it != windowStack.rend(); ++it) {

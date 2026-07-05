@@ -58,6 +58,13 @@ void VirtualWindow::triggerOpenAnimation(sf::Vector2f iconPos) {
 
 void VirtualWindow::setPosition(float x, float y) {
     targetPos = sf::Vector2f(x, y);
+    currentPos = targetPos;
+    
+    windowFrame.setPosition(currentPos);
+    titleBar.setPosition(currentPos);
+    titleText.setPosition(currentPos.x + 10.f, currentPos.y + 5.f);
+    closeButton.setPosition(currentPos.x + windowFrame.getSize().x - 26.f, currentPos.y + 4.f);
+    closeText.setPosition(currentPos.x + windowFrame.getSize().x - 20.f, currentPos.y + 7.f);
 }
 
 void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
@@ -67,40 +74,37 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
     sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
-    //mouse click logic
+    sf::Vector2f winPos = windowFrame.getPosition();
+    float winWidth = windowFrame.getSize().x;
+    float winHeight = windowFrame.getSize().y;
+
+    //check title bar click for drag
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        
-        //check if click is on this window - gain focus
         if (windowFrame.getGlobalBounds().contains(mousePos)) {
             hasFocus = true;
         } else {
-            //click outside window - lose focus
             hasFocus = false;
         }
-        
-        //close window check
+
         if (closeButton.getGlobalBounds().contains(mousePos)) {
             isOpen = false;
             std::cout << "[OS Engine] VirtualWindow closed by user.\n";
             return;
         }
 
-        //title bar drag check (only drag if focused)
-        if (hasFocus && titleBar.getGlobalBounds().contains(mousePos)) {
+        sf::FloatRect titleBarBounds(winPos.x, winPos.y, winWidth - 30.f, 30.f);
+        if (hasFocus && titleBarBounds.contains(mousePos)) {
             isDragged = true;
-            dragOffset = mousePos - windowFrame.getPosition();
+            dragOffset = mousePos - winPos;
         }
-    }
 
-    //drag release logic
-    if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+        // Snap window confinement constraint on release of mouse drag
+    } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
         if (isDragged) {
             isDragged = false;
             
-            float x = windowFrame.getPosition().x;
-            float y = windowFrame.getPosition().y;
-            float winWidth = windowFrame.getSize().x;
-            float winHeight = windowFrame.getSize().y;
+            float x = winPos.x;
+            float y = winPos.y;
 
             float minY = 0.f;
             float maxY = 768.f - 40.f - 30.f;
@@ -145,26 +149,6 @@ void VirtualWindow::update() {
             isOpening = false;
         }
     }
-
-    static sf::Clock dragClock;
-    float dragDt = dragClock.restart().asSeconds();
-    if (dragDt > 0.1f) dragDt = 0.1f;
-
-    float lerpFactor = 15.f * dragDt / ramLagMultiplier;
-    if (lerpFactor > 1.f) lerpFactor = 1.f;
-    if (lerpFactor < 0.01f) lerpFactor = 0.01f;
-
-    currentPos += (targetPos - currentPos) * lerpFactor;
-
-    if (std::abs(currentPos.x - targetPos.x) < 0.5f && std::abs(currentPos.y - targetPos.y) < 0.5f) {
-        currentPos = targetPos;
-    }
-
-    windowFrame.setPosition(currentPos);
-    titleBar.setPosition(currentPos);
-    titleText.setPosition(currentPos.x + 10.f, currentPos.y + 5.f);
-    closeButton.setPosition(currentPos.x + windowFrame.getSize().x - 26.f, currentPos.y + 4.f);
-    closeText.setPosition(currentPos.x + windowFrame.getSize().x - 20.f, currentPos.y + 7.f);
 }
 
 void VirtualWindow::draw(sf::RenderWindow& window) {

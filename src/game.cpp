@@ -10,6 +10,7 @@ Game::Game() {
     windowManager.addWindow(&fileExplorer);
     windowManager.addWindow(&terminal);
     windowManager.addWindow(&notepad);
+    windowManager.addWindow(&settingsApp);
 
     systemDelayMultiplier = 1.0f;
 
@@ -177,7 +178,8 @@ void Game::processEvents() {
             }
             else if (clickedApp == "open_control_panel") {
                 std::cout << "[OS Engine] Opening Control Panel...\n";
-                // Will implement in next increment
+                settingsApp.setIsOpen(true);
+                forcedFocusWindow = &settingsApp;
             }
         }
 
@@ -196,6 +198,11 @@ void Game::update() {
             stateClock.restart();
         }
         return;
+    }
+
+    if (settingsApp.isFullscreenToggleRequested()) {
+        settingsApp.clearFullscreenToggleRequest();
+        toggleFullscreen();
     }
 
     if (currentState == GameState::NormalOS) {
@@ -325,4 +332,15 @@ void Game::recalculateSystemPerformance() {
     systemDelayMultiplier = newMultiplier;
     terminal.setDelayMultiplier(systemDelayMultiplier);
     std::cout << "[OS Kernel] TOTAL SYSTEM DELAY MULTIPLIER: " << systemDelayMultiplier << "x\n";
+}
+
+void Game::toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    window.close();
+    if (isFullscreen) {
+        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Fullscreen);
+    } else {
+        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Titlebar | sf::Style::Close);
+    }
+    window.setFramerateLimit(60);
 }

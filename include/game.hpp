@@ -8,6 +8,7 @@
 #include "apps/terminalApp.hpp"
 #include "apps/softwareInstallerApp.hpp"
 #include "apps/fileExplorerApp.hpp"
+#include "apps/settingsApp.hpp"
 #include "engine/windowManager.hpp"
 
 enum class GameState {
@@ -27,9 +28,11 @@ private:
     TerminalApp terminal;
     SoftwareInstallerApp installerWizard;
     FileExplorerApp fileExplorer;
+    SettingsApp settingsApp;
     WindowManager windowManager;
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;
+    bool isFullscreen = false;
 
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;
@@ -60,6 +63,7 @@ private:
     sf::Text usbCancelText;
 
     void initWindow();
+    void toggleFullscreen();
 
 public:
     Game();

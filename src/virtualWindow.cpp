@@ -91,13 +91,24 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
             float winWidth = windowFrame.getSize().x;
             float winHeight = windowFrame.getSize().y;
 
-            // Y bounds: Titlebar must stay inside desktop area (0 to 768 - 40 - 30)
-            if (y < 0.f) y = 0.f;
-            if (y > 768.f - 40.f - 30.f) y = 768.f - 40.f - 30.f;
+            float minY = 0.f;
+            float maxY = 768.f - 40.f - 30.f;
+            if (isModalActive()) {
+                maxY = 768.f - 40.f - winHeight;
+            }
 
-            // X bounds: at least 40px of titlebar must remain visible on screen
-            if (x < -winWidth + 40.f) x = -winWidth + 40.f;
-            if (x > 1024.f - 40.f) x = 1024.f - 40.f;
+            if (y < minY) y = minY;
+            if (y > maxY) y = maxY;
+
+            float minX = -winWidth + 40.f;
+            float maxX = 1024.f - 40.f;
+            if (isModalActive()) {
+                minX = 0.f;
+                maxX = 1024.f - winWidth;
+            }
+
+            if (x < minX) x = minX;
+            if (x > maxX) x = maxX;
 
             setPosition(x, y);
         }

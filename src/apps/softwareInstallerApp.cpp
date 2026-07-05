@@ -22,9 +22,9 @@ SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("App Installer", 45
     warningText.setFillColor(sf::Color(130, 0, 0));
     warningText.setStyle(sf::Text::Bold);
 
-    createCheckbox("Amity Shield Antivirus (Suppress 30% minor glitches)", "antivirus", 30.0f, 80.0f);
-    createCheckbox("Marrow PC Health Monitor (Show Integrity on Taskbar)", "health_monitor", 30.0f, 130.0f);
-    createCheckbox("Memory Abstractor (Emergency system defragmenter)", "abstractor", 30.0f, 180.0f);
+    createCheckbox("Amity Shield Antivirus (Auto-contain 1/3 threats | Background RAM load)", "antivirus", 30.0f, 80.0f);
+    createCheckbox("Marrow PC Health Monitor (Taskbar CPU/RAM/Temp readouts)", "health_monitor", 30.0f, 130.0f);
+    createCheckbox("Memory Abstractor (GUI files scan & defragmenter utility)", "abstractor", 30.0f, 180.0f);
 
     finalizeBtn.setSize(sf::Vector2f(130, 30));
     finalizeBtn.setFillColor(sf::Color(220, 220, 220));

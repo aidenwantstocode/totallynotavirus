@@ -306,9 +306,9 @@ void Game::update() {
 
     if (currentState == GameState::NormalOS || currentState == GameState::ActiveOS || currentState == GameState::CorruptedOS) {
         float activeRam = 10.f;
-        bool healthActive = installerWizard.isComponentChecked("health_monitor");
-        bool antivirusActive = installerWizard.isComponentChecked("antivirus");
-        bool defragActive = installerWizard.isComponentChecked("abstractor");
+        bool healthActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("health_monitor");
+        bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
+        bool defragActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("abstractor");
 
         if (healthActive) activeRam += 10.f;
         if (antivirusActive) activeRam += 15.f;

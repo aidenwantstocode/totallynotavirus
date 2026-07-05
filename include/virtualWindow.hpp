@@ -33,6 +33,7 @@ public:
     void setHasFocus(bool focus) { hasFocus = focus; }
     void setPosition(float x, float y);
     bool containsPoint(sf::Vector2f point) const { return windowFrame.getGlobalBounds().contains(point); }
+    virtual bool isModalActive() const { return false; }
 };
 
 #endif

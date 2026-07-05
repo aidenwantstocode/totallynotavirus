@@ -52,6 +52,7 @@ public:
     bool isComponentChecked(const std::string& id) const;
     bool getIsFinalized() const { return isFinalized; }
     void setSystemCorrupted(bool status);
+    bool isModalActive() const override { return isErrorOpen; }
 };
 
 #endif

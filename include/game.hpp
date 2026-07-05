@@ -4,8 +4,11 @@
 #include <SFML/Graphics.hpp>
 #include "desktop.hpp"
 #include "glitchManager.hpp"
-#include "coreApps.hpp"
-#include "installerApps.hpp"
+#include "apps/notepadApp.hpp"
+#include "apps/terminalApp.hpp"
+#include "apps/softwareInstallerApp.hpp"
+#include "apps/fileExplorerApp.hpp"
+#include "engine/windowManager.hpp"
 
 enum class GameState {
     BootSequence,
@@ -24,12 +27,14 @@ private:
     TerminalApp terminal;
     SoftwareInstallerApp installerWizard;
     FileExplorerApp fileExplorer;
+    WindowManager windowManager;
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;
 
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;
     bool hasRecalculatedPerformance = false;
+    bool hasSpawnedInstaller = false;
     void recalculateSystemPerformance();
 
     GameState currentState;

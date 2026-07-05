@@ -53,6 +53,7 @@ void NotepadApp::update() {
 
 void NotepadApp::draw(sf::RenderWindow& window) {
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
     if (isOpen) {
         window.draw(contentText);
     }

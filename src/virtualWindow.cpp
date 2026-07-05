@@ -54,6 +54,15 @@ void VirtualWindow::triggerOpenAnimation(sf::Vector2f iconPos) {
     isOpening = true;
     animTime = 0.f;
     animStartPos = iconPos;
+
+    float delay = (ramLagMultiplier - 2.5f) * 0.22f;
+    if (delay < 0.f) delay = 0.f;
+    if (delay > 2.5f) delay = 2.5f;
+    openDelayTimer = delay;
+
+    if (openDelayTimer > 0.f) {
+        std::cout << "[OS Kernel] Thinking delay: " << openDelayTimer << "s under conventional load (multiplier: " << ramLagMultiplier << "x)\n";
+    }
 }
 
 void VirtualWindow::setPosition(float x, float y) {
@@ -143,7 +152,13 @@ void VirtualWindow::update() {
         float dt = animClock.restart().asSeconds();
         if (dt > 0.1f) dt = 0.1f;
 
-        animTime += dt * (5.0f / ramLagMultiplier);
+        if (openDelayTimer > 0.f) {
+            openDelayTimer -= dt;
+            if (openDelayTimer < 0.f) openDelayTimer = 0.f;
+            return;
+        }
+
+        animTime += dt * 12.0f;
         if (animTime >= 1.0f) {
             animTime = 1.0f;
             isOpening = false;
@@ -155,6 +170,10 @@ void VirtualWindow::draw(sf::RenderWindow& window) {
     if (!isOpen) return;
 
     if (isOpening) {
+        if (openDelayTimer > 0.f) {
+            return;
+        }
+
         sf::FloatRect finalBounds = windowFrame.getGlobalBounds();
         float x = animStartPos.x + (finalBounds.left - animStartPos.x) * animTime;
         float y = animStartPos.y + (finalBounds.top - animStartPos.y) * animTime;

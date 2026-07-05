@@ -78,6 +78,7 @@ void DefragApp::update() {
 void DefragApp::draw(sf::RenderWindow& window) {
     if (!isOpen) return;
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
 
     sf::Vector2f winPos = windowFrame.getPosition();
 

@@ -57,6 +57,33 @@ void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& wi
                 commandHistory += "\n[PKGGET] Connecting to repository...";
                 commandHistory += "\n[PKGGET] Downloading amityappsetup.exe...\n";
             }
+            else if (currentInput == "regsync") {
+                isProcessing = true;
+                currentProcessingCommand = "regsync";
+                requiredProcessingTime = 2.0f * delayMultiplier;
+                processingClock.restart();
+                commandHistory += "\n[SYSTEM] Querying registry keys...";
+                commandHistory += "\n[SYSTEM] Synchronizing node allocation logs...\n";
+            }
+            else if (currentInput == "unlock FAT32 4") {
+                isProcessing = true;
+                currentProcessingCommand = "unlock FAT32 4";
+                requiredProcessingTime = 2.0f * delayMultiplier;
+                processingClock.restart();
+                commandHistory += "\n[SYSTEM] Checking FAT32 checksum logs...";
+                commandHistory += "\n[SYSTEM] Unlocking allocation entries...\n";
+            }
+            else if (currentInput == "unlock safe A1-99X-E9") {
+                isProcessing = true;
+                currentProcessingCommand = "unlock safe A1-99X-E9";
+                requiredProcessingTime = 2.0f * delayMultiplier;
+                processingClock.restart();
+                commandHistory += "\n[SYSTEM] Authorizing Safe Mode Decryption Key...";
+                commandHistory += "\n[SYSTEM] Verifying certificate signatures...\n";
+            }
+            else if (currentInput.rfind("unlock ", 0) == 0) {
+                commandHistory += currentInput + "\n[ERROR] Incorrect parameters or unauthorized unlock command.\n\nC:\\> ";
+            }
             else if (currentInput.rfind("rm ", 0) == 0 && currentInput.length() > 3) {
                 std::string file = currentInput.substr(3);
                 bool deleted = false;
@@ -99,11 +126,20 @@ void TerminalApp::update() {
             if (currentProcessingCommand == "recover") {
                 recoveryComplete = true;
                 commandHistory += "\n[SUCCESS] Sector 0x04F2 recovered successfully!";
-                commandHistory += "\nAmityOS Key: [A1-99X-E9]\n";
+                commandHistory += "\nAmityOS Key: [A1-99X-E9]\n\nC:\\> ";
             } else if (currentProcessingCommand == "pkgget install recovery-wizard") {
                 installerDownloaded = true;
                 commandHistory += "\n[SUCCESS] Package 'recovery-wizard' installed.";
-                commandHistory += "\nShortcut placed on Desktop.\n";
+                commandHistory += "\nShortcut placed on Desktop.\n\nC:\\> ";
+            } else if (currentProcessingCommand == "regsync") {
+                regsyncSuccess = true;
+                commandHistory += "\n[SUCCESS] Registry nodes synchronized successfully!\n\nC:\\> ";
+            } else if (currentProcessingCommand == "unlock FAT32 4") {
+                fat32Success = true;
+                commandHistory += "\n[SUCCESS] File Allocation Table FAT32 sectors unlocked!\n\nC:\\> ";
+            } else if (currentProcessingCommand == "unlock safe A1-99X-E9") {
+                safeSuccess = true;
+                commandHistory += "\n[SUCCESS] Safe mode security block bypassed.\n\nC:\\> ";
             }
             terminalText.setString(commandHistory + currentInput);
             currentProcessingCommand = "";
@@ -111,9 +147,30 @@ void TerminalApp::update() {
     }
 }
 
+static std::string wrapText(const std::string& str, size_t lineLimit) {
+    std::string result = "";
+    std::string currentLine = "";
+    for (char c : str) {
+        if (c == '\n') {
+            result += currentLine + "\n";
+            currentLine = "";
+        } else {
+            currentLine += c;
+            if (currentLine.length() >= lineLimit) {
+                result += currentLine + "\n";
+                currentLine = "";
+            }
+        }
+    }
+    result += currentLine;
+    return result;
+}
+
 void TerminalApp::draw(sf::RenderWindow& window) {
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
     if (isOpen) {
+        terminalText.setString(wrapText(commandHistory + currentInput, 45));
         window.draw(terminalText);
     }
 }
@@ -132,4 +189,22 @@ bool TerminalApp::isInstallerDownloaded() const {
 
 void TerminalApp::setFileExplorer(FileExplorerApp* explorer) {
     fileExplorer = explorer;
+}
+
+bool TerminalApp::checkAndClearRegsync() {
+    bool res = regsyncSuccess;
+    regsyncSuccess = false;
+    return res;
+}
+
+bool TerminalApp::checkAndClearFat32() {
+    bool res = fat32Success;
+    fat32Success = false;
+    return res;
+}
+
+bool TerminalApp::checkAndClearSafe() {
+    bool res = safeSuccess;
+    safeSuccess = false;
+    return res;
 }

@@ -23,6 +23,7 @@ protected:
     bool isOpening = false;
     float animTime = 0.f;
     sf::Vector2f animStartPos;
+    float openDelayTimer = 0.f;
 
 public:
     static float ramLagMultiplier;

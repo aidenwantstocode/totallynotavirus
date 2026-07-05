@@ -63,17 +63,39 @@ FileExplorerApp::FileExplorerApp() : VirtualWindow("File Explorer", 500, 400) {
     pcShortcut.isVisible = true;
     sidebarShortcuts.push_back(pcShortcut);
 
-    SidebarShortcut desktopShortcut;
-    desktopShortcut.name = "Desktop";
-    desktopShortcut.path = "C:\\Desktop";
-    desktopShortcut.isVisible = true;
-    sidebarShortcuts.push_back(desktopShortcut);
-
     SidebarShortcut basementShortcut;
     basementShortcut.name = "Basement Drive (D:)";
     basementShortcut.path = "D:\\";
     basementShortcut.isVisible = false;
     sidebarShortcuts.push_back(basementShortcut);
+
+    // Unsupported Error Dialog Setup
+    errorBg.setSize(sf::Vector2f(280.f, 130.f));
+    errorBg.setFillColor(sf::Color(192, 192, 192));
+    errorBg.setOutlineThickness(1.5f);
+    errorBg.setOutlineColor(sf::Color::White);
+
+    errorOkButton.setSize(sf::Vector2f(70.f, 22.f));
+    errorOkButton.setFillColor(sf::Color(220, 220, 220));
+    errorOkButton.setOutlineThickness(1.f);
+    errorOkButton.setOutlineColor(sf::Color::Black);
+
+    errorTitleText.setFont(font);
+    errorTitleText.setString("SYSTEM WARN");
+    errorTitleText.setCharacterSize(11);
+    errorTitleText.setFillColor(sf::Color::White);
+    errorTitleText.setStyle(sf::Text::Bold);
+
+    errorBodyText.setFont(font);
+    errorBodyText.setString("Cannot open file:\nFormat is not supported by OS.");
+    errorBodyText.setCharacterSize(11);
+    errorBodyText.setFillColor(sf::Color::Black);
+
+    errorOkText.setFont(font);
+    errorOkText.setString("OK");
+    errorOkText.setCharacterSize(11);
+    errorOkText.setFillColor(sf::Color::Black);
+    errorOkText.setStyle(sf::Text::Bold);
 
     currentPath = "C:\\";
     refreshVisibleItems();
@@ -84,12 +106,15 @@ FileExplorerApp::FileExplorerApp() : VirtualWindow("File Explorer", 500, 400) {
 void FileExplorerApp::loadFileSystem() {
     fileSystem = {
         {"todo_list.txt", "C:\\todo_list.txt", "txt", false, {}},
-        {"system_log.txt", "C:\\system_log.txt", "txt", false, {}},
         {"readme.md", "C:\\readme.md", "txt", false, {}},
         {"Desktop", "C:\\Desktop", "folder", true, {}},
         {"sys", "C:\\sys", "folder", true, {
+            {"kernel.sys", "C:\\sys\\kernel.sys", "sysfile", false, {}},
+            {"network.dll", "C:\\sys\\network.dll", "sysfile", false, {}},
             {"drivers", "C:\\sys\\drivers", "folder", true, {
-                {"recovery_guide.txt", "C:\\sys\\drivers\\recovery_guide.txt", "txt", false, {}}
+                {"recovery_guide.txt", "C:\\sys\\drivers\\recovery_guide.txt", "txt", false, {}},
+                {"display.drv", "C:\\sys\\drivers\\display.drv", "sysfile", false, {}},
+                {"keyboard.sys", "C:\\sys\\drivers\\keyboard.sys", "sysfile", false, {}}
             }}
         }},
         {"Program Files", "C:\\Program Files", "folder", true, {}},
@@ -182,8 +207,40 @@ std::string FileExplorerApp::getSelectedItemName() const {
 }
 
 void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
+    if (isUnsupportedErrorOpen) {
+        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+            sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+            sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+            if (errorOkButton.getGlobalBounds().contains(mousePos)) {
+                isUnsupportedErrorOpen = false;
+                std::cout << "[FileExplorer] Closed unsupported warning dialog.\n";
+            }
+        }
+        return;
+    }
+
     VirtualWindow::handleEvent(event, window);
     if (!isOpen) return;
+
+    if (event.type == sf::Event::MouseWheelScrolled && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
+        sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+        if (contentPane.getGlobalBounds().contains(mousePos)) {
+            scrollOffsetY += event.mouseWheelScroll.delta * 25.f;
+            float maxScroll = 0.f;
+            float itemHeight = 45.f;
+            float paddingY = 35.f;
+            int itemsPerRow = std::max(1, static_cast<int>((contentPane.getSize().x - 55.f) / (45.f + 55.f)));
+            int rows = (visibleItems.size() + itemsPerRow - 1) / itemsPerRow;
+            float contentHeight = rows * (itemHeight + paddingY) + 40.f;
+            float visibleHeight = contentPane.getSize().y;
+            float minScroll = std::min(0.f, visibleHeight - contentHeight - 20.f);
+
+            if (scrollOffsetY > maxScroll) scrollOffsetY = maxScroll;
+            if (scrollOffsetY < minScroll) scrollOffsetY = minScroll;
+            updateLayout();
+        }
+    }
 
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
@@ -193,6 +250,7 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
         for (const auto& shortcut : sidebarShortcuts) {
             if (shortcut.isVisible && shortcut.rect.getGlobalBounds().contains(mousePos)) {
                 currentPath = shortcut.path;
+                scrollOffsetY = 0.f;
                 refreshVisibleItems();
                 if (!visibleItems.empty()) {
                     selectItem(0);
@@ -206,6 +264,7 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
 
         // Back button
         if (backButton.getGlobalBounds().contains(mousePos) && currentPath != "C:\\" && currentPath != "D:\\") {
+            scrollOffsetY = 0.f;
             navigateUp();
             return;
         }
@@ -220,12 +279,25 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
         bool itemClicked = false;
         for (int i = 0; i < static_cast<int>(itemBackgrounds.size()); ++i) {
             if (itemBackgrounds[i].getGlobalBounds().contains(mousePos)) {
+                // Bounds check - only click if visible inside pane
+                float paneTop = contentPane.getPosition().y + 35.f;
+                float paneBottom = contentPane.getPosition().y + contentPane.getSize().y;
+                float itemTop = itemBackgrounds[i].getPosition().y;
+                if (itemTop < paneTop || itemTop > paneBottom) {
+                    continue; 
+                }
+
                 itemClicked = true;
                 if (selectedIndex == i && doubleClickTimer.getElapsedTime().asMilliseconds() < 300) {
                     if (visibleItems[i].isFolder) {
+                        scrollOffsetY = 0.f;
                         enterFolder(i);
                     } else {
-                        activationRequested = true;
+                        if (visibleItems[i].type == "sysfile") {
+                            isUnsupportedErrorOpen = true;
+                        } else {
+                            activationRequested = true;
+                        }
                     }
                     doubleClickTimer.restart();
                 } else {
@@ -410,7 +482,7 @@ void FileExplorerApp::updateLayout() {
         int col = i % itemsPerRow;
 
         float itemX = contentPane.getPosition().x + paddingX + col * (itemWidth + paddingX);
-        float itemY = contentPane.getPosition().y + 40.f + row * (itemHeight + paddingY);
+        float itemY = contentPane.getPosition().y + 40.f + row * (itemHeight + paddingY) + scrollOffsetY;
         
         itemBackgrounds[i].setSize(sf::Vector2f(itemWidth, itemWidth));
         itemBackgrounds[i].setPosition(itemX, itemY);
@@ -448,6 +520,7 @@ void FileExplorerApp::update() {
 
 void FileExplorerApp::draw(sf::RenderWindow& window) {
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
     if (isOpen) {
         window.draw(sidebar);
         window.draw(contentPane);
@@ -466,8 +539,31 @@ void FileExplorerApp::draw(sf::RenderWindow& window) {
         }
 
         for (size_t i = 0; i < itemBackgrounds.size(); ++i) {
-            window.draw(itemBackgrounds[i]);
-            window.draw(itemLabels[i]);
+            float paneTop = contentPane.getPosition().y + 35.f;
+            float paneBottom = contentPane.getPosition().y + contentPane.getSize().y;
+
+            float itemTop = itemBackgrounds[i].getPosition().y;
+            float itemBottom = itemTop + itemBackgrounds[i].getSize().y + 20.f;
+
+            if (itemTop >= paneTop && itemBottom <= paneBottom) {
+                window.draw(itemBackgrounds[i]);
+                window.draw(itemLabels[i]);
+            }
+        }
+
+        if (isUnsupportedErrorOpen) {
+            sf::Vector2f center = windowFrame.getPosition() + sf::Vector2f(110.f, 130.f);
+            errorBg.setPosition(center);
+            errorOkButton.setPosition(center.x + 105.f, center.y + 90.f);
+            errorTitleText.setPosition(center.x + 10.f, center.y + 5.f);
+            errorBodyText.setPosition(center.x + 15.f, center.y + 35.f);
+            errorOkText.setPosition(center.x + 130.f, center.y + 94.f);
+
+            window.draw(errorBg);
+            window.draw(errorOkButton);
+            window.draw(errorTitleText);
+            window.draw(errorBodyText);
+            window.draw(errorOkText);
         }
     }
 }
@@ -564,4 +660,57 @@ static int recursiveCountLeaks(const std::vector<FileEntry>& items) {
 
 int FileExplorerApp::countCorruptedFiles() const {
     return recursiveCountLeaks(fileSystem) + recursiveCountLeaks(basementSystem);
+}
+
+static bool recursiveAddFile(std::vector<FileEntry>& items, const std::string& folderPath, const FileEntry& newFile) {
+    for (auto& item : items) {
+        if (item.isFolder) {
+            if (item.path == folderPath) {
+                item.children.push_back(newFile);
+                return true;
+            }
+            if (recursiveAddFile(item.children, folderPath, newFile)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void FileExplorerApp::addFileToFolder(const std::string& folderPath, const std::string& filename, const std::string& type) {
+    FileEntry newFile = {filename, folderPath + "\\" + filename, type, false, {}};
+
+    bool added = false;
+    if (folderPath.rfind("D:\\", 0) == 0) {
+        if (folderPath == "D:\\") {
+            basementSystem.push_back(newFile);
+            added = true;
+        } else {
+            added = recursiveAddFile(basementSystem, folderPath, newFile);
+        }
+    } else {
+        if (folderPath == "C:\\") {
+            fileSystem.push_back(newFile);
+            added = true;
+        } else {
+            added = recursiveAddFile(fileSystem, folderPath, newFile);
+        }
+    }
+
+    if (added && currentPath == folderPath) {
+        refreshVisibleItems();
+        updateLayout();
+    }
+}
+
+std::vector<std::string> FileExplorerApp::getDesktopFileNames() const {
+    std::vector<std::string> names;
+    for (const auto& entry : fileSystem) {
+        if (entry.path == "C:\\Desktop") {
+            for (const auto& child : entry.children) {
+                names.push_back(child.name);
+            }
+        }
+    }
+    return names;
 }

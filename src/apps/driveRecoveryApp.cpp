@@ -80,10 +80,12 @@ void DriveRecoveryApp::startDiagnostics() {
 
 void DriveRecoveryApp::enterCorruptedMode() {
     corruptedMode = true;
-    isRunning = true; // Auto-resume recovery in corrupted mode
+    isRunning = true;
     progress = 0.f;
     currentWave = 0;
-    nextCheckpoint = 33.f;
+    currentSector = 1;
+    sectorLocked = false;
+    nextCheckpoint = 20.f;
     waveActive = false;
     logLines.clear();
     addLog("[SYSTEM RECOVERY STATE]");
@@ -92,12 +94,34 @@ void DriveRecoveryApp::enterCorruptedMode() {
 }
 
 void DriveRecoveryApp::triggerNextWave(int waveNum, float checkpoint) {
-    currentWave = waveNum;
-    nextCheckpoint = checkpoint;
     waveActive = false;
-    isRunning = true; // Resume progress
-    progressClock.restart();
-    addLog("[INFO] Lock released. Re-scanning segments...");
+    isRunning = false;
+    sectorLocked = true;
+    currentSector = waveNum + 1;
+    nextCheckpoint = checkpoint;
+
+    if (currentSector == 2) {
+        addLog("[ERROR] Registry mapping mismatch in Sector 2.");
+        addLog("[HELP] Synchronize nodes. Command: 'regsync'.");
+    } else if (currentSector == 3) {
+        addLog("[ERROR] FAT32 cluster mismatch in Sector 3.");
+        addLog("[HELP] Find key in memories, unlock FAT32.");
+    } else if (currentSector == 4) {
+        addLog("[ERROR] Heap fragmentation error in Sector 4.");
+        addLog("[HELP] Run Memory Abstractor scan to optimize.");
+    } else if (currentSector == 5) {
+        addLog("[ERROR] Conventional memory signature missing.");
+        addLog("[HELP] Input Safe Mode key from system logs.");
+    }
+}
+
+void DriveRecoveryApp::unlockSector(int sectorNum) {
+    if (sectorNum == currentSector && sectorLocked) {
+        sectorLocked = false;
+        isRunning = true;
+        progressClock.restart();
+        addLog("[SUCCESS] Sector unlocked! Resuming scan...");
+    }
 }
 
 void DriveRecoveryApp::update() {
@@ -115,7 +139,7 @@ void DriveRecoveryApp::update() {
 
                 if (progress >= 99.f) {
                     progress = 99.f;
-                    if (elapsed >= 40.f) { // 35s to hit 99%, 5s freeze
+                    if (elapsed >= 40.f) { // 35s scan, 5s freeze
                         bsodTriggered = true;
                         isRunning = false;
                     }
@@ -131,19 +155,18 @@ void DriveRecoveryApp::update() {
                 }
             }
         } else {
-            // Corrupted wave mode
-            if (!waveActive) {
+            if (!waveActive && !sectorLocked) {
                 float dt = progressClock.restart().asSeconds();
-                progress += dt * 1.5f; // Climb slowly
-                
+                progress += (dt / ramLagMultiplier) * 1.2f;
+
                 if (progress >= nextCheckpoint) {
                     progress = nextCheckpoint;
                     waveActive = true;
-                    isRunning = false; // Stop climbing, wave is active
-                    addLog("[ALERT] Sectors locked by active intrusion!");
-                    addLog("[ALERT] Contain threat to unlock sectors.");
+                    isRunning = false;
+                    addLog("[WARNING] Malware intrusion in Sector " + std::to_string(currentSector) + "!");
+                    addLog("[ALERT] Defend OS from threat load to survive.");
                 }
-                
+
                 if (progress >= 100.f) {
                     progress = 100.f;
                     isRunning = false;
@@ -157,6 +180,7 @@ void DriveRecoveryApp::update() {
 void DriveRecoveryApp::draw(sf::RenderWindow& window) {
     if (!isOpen) return;
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
 
     sf::Vector2f winPos = windowFrame.getPosition();
 

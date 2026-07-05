@@ -259,8 +259,9 @@ void SoftwareInstallerApp::update() {
 
 void SoftwareInstallerApp::draw(sf::RenderWindow& window) {
     if (!isOpen) return;
-    
+
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
     window.draw(headerText);
     window.draw(warningText);
     for (const auto& item : checkboxes) {

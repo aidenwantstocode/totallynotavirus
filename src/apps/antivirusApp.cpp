@@ -23,12 +23,15 @@ AntivirusApp::AntivirusApp() : VirtualWindow("Amity Shield", 320, 260) {
     createCheckbox("Filesystem Guard (popups)", "file_shield", 30.f, 100.f);
     createCheckbox("Active Monitor (scripts)", "active_shield", 30.f, 140.f);
     createCheckbox("Memory Firewall (corruption)", "mem_shield", 30.f, 180.f);
+    if (!checkboxes.empty()) {
+        checkboxes[0].isChecked = true;
+    }
 }
 
 void AntivirusApp::createCheckbox(const std::string& labelText, const std::string& id, float x, float y) {
     ShieldCheckbox item;
     item.shieldId = id;
-    item.isChecked = true;
+    item.isChecked = false;
 
     item.box.setSize(sf::Vector2f(16.f, 16.f));
     item.box.setFillColor(sf::Color::White);
@@ -65,6 +68,7 @@ void AntivirusApp::update() {
 void AntivirusApp::draw(sf::RenderWindow& window) {
     if (!isOpen) return;
     VirtualWindow::draw(window);
+    if (getIsOpening()) return;
 
     sf::Vector2f winPos = windowFrame.getPosition();
 
@@ -112,10 +116,36 @@ void AntivirusApp::handleEvent(const sf::Event& event, const sf::RenderWindow& w
             sf::FloatRect absoluteBounds(winPos.x + rx, winPos.y + ry, cb.box.getSize().x, cb.box.getSize().y);
 
             if (absoluteBounds.contains(mousePosF)) {
-                cb.isChecked = !cb.isChecked;
+                bool targetState = !cb.isChecked;
+                // Radio button reset: clear all checkboxes
+                for (auto& other : checkboxes) {
+                    other.isChecked = false;
+                }
+                cb.isChecked = targetState;
                 std::cout << "[Antivirus] Toggled " << cb.shieldId << " to: " << cb.isChecked << "\n";
                 break;
             }
         }
     }
+}
+
+bool AntivirusApp::isFileShieldActive() const {
+    for (const auto& cb : checkboxes) {
+        if (cb.shieldId == "file_shield" && cb.isChecked) return true;
+    }
+    return false;
+}
+
+bool AntivirusApp::isActiveMonitorActive() const {
+    for (const auto& cb : checkboxes) {
+        if (cb.shieldId == "active_shield" && cb.isChecked) return true;
+    }
+    return false;
+}
+
+bool AntivirusApp::isMemoryFirewallActive() const {
+    for (const auto& cb : checkboxes) {
+        if (cb.shieldId == "mem_shield" && cb.isChecked) return true;
+    }
+    return false;
 }

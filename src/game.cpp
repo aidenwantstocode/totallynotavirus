@@ -127,7 +127,7 @@ Game::Game() {
 }
 
 void Game::initWindow() {
-    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Default);
+    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Titlebar | sf::Style::Close);
     window.setFramerateLimit(60);
 }
 
@@ -563,7 +563,7 @@ void Game::toggleFullscreen() {
     if (isFullscreen) {
         window.create(sf::VideoMode::getDesktopMode(), "totallynotavirus", sf::Style::None);
     } else {
-        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Default);
+        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Titlebar | sf::Style::Close);
     }
     window.setFramerateLimit(60);
     updateWindowView(window.getSize().x, window.getSize().y);

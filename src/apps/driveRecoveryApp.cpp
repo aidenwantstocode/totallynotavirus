@@ -115,7 +115,7 @@ void DriveRecoveryApp::update() {
 
                 if (progress >= 99.f) {
                     progress = 99.f;
-                    if (elapsed >= 43.f) { // 35s to hit 99%, 8s freeze
+                    if (elapsed >= 40.f) { // 35s to hit 99%, 5s freeze
                         bsodTriggered = true;
                         isRunning = false;
                     }

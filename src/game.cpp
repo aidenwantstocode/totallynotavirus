@@ -294,7 +294,7 @@ void Game::update() {
         if (elapsed > bsodDuration) {
             isNextBootCorrupted = true;
             currentState = GameState::BootSequence;
-            bootDuration = 3.0f;
+            bootDuration = 6.0f;
             stateClock.restart();
         }
         return;

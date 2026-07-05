@@ -42,7 +42,7 @@ private:
     sf::RectangleShape bsodBg;
     sf::Text bsodText;
     sf::Clock bsodClock;
-    float bsodDuration = 12.0f;
+    float bsodDuration = 8.0f;
 
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;

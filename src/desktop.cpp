@@ -69,10 +69,10 @@ void Desktop::createIcon(const std::string& title, const std::string& id, float 
 void Desktop::snapToGrid(DesktopIcon& icon) {
     float gridX = 90.0f;
     float gridY = 90.0f;
-    float newX = std::round((icon.body.getPosition().x - 10.0f) / gridX) * gridX + 10.0f;
-    float newY = std::round((icon.body.getPosition().y - 10.0f) / gridY) * gridY + 10.0f;
-    if (newX < 10.0f) newX = 10.0f;
-    if (newY < 10.0f) newY = 10.0f;
+    float newX = std::round((icon.body.getPosition().x - 40.0f) / gridX) * gridX + 40.0f;
+    float newY = std::round((icon.body.getPosition().y - 40.0f) / gridY) * gridY + 40.0f;
+    if (newX < 40.0f) newX = 40.0f;
+    if (newY < 40.0f) newY = 40.0f;
     icon.body.setPosition(newX, newY);
     icon.label.setPosition(newX - 5.f, newY + 45.f);
 }

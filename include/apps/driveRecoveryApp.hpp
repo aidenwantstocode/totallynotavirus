@@ -28,6 +28,9 @@ private:
     bool waveActive;
     int currentWave;
     float nextCheckpoint;
+
+    int currentSector = 1;
+    bool sectorLocked = false;
     
     void addLog(const std::string& message);
     void updateLogText();
@@ -52,6 +55,11 @@ public:
     void triggerNextWave(int waveNum, float checkpoint);
     
     bool getIsRunning() const { return isRunning; }
+
+    int getCurrentSector() const { return currentSector; }
+    bool isSectorLocked() const { return sectorLocked; }
+    void setSectorLocked(bool locked) { sectorLocked = locked; }
+    void unlockSector(int sectorNum);
 };
 
 #endif

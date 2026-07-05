@@ -74,6 +74,7 @@ private:
     // Hardware prompt UI
     float usbTriggerDelay;
     bool usbPluggedIn;
+    float systemLogsSpawnTimer = -1.f;
     sf::RectangleShape usbPopupFrame;
     sf::RectangleShape usbPopupTitleBar;
     sf::Text usbPopupTitleText;

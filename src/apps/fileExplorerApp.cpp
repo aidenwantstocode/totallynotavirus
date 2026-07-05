@@ -72,11 +72,10 @@ FileExplorerApp::FileExplorerApp() : VirtualWindow("File Explorer", 500, 400) {
 
 void FileExplorerApp::loadFileSystem() {
     fileSystem = {
-        {"Desktop", "C:\\Desktop", "folder", true, {
-            {"todo_list.txt", "C:\\Desktop\\todo_list.txt", "txt", false, {}},
-            {"system_log.txt", "C:\\Desktop\\system_log.txt", "txt", false, {}},
-            {"readme.md", "C:\\Desktop\\readme.md", "txt", false, {}}
-        }},
+        {"todo_list.txt", "C:\\todo_list.txt", "txt", false, {}},
+        {"system_log.txt", "C:\\system_log.txt", "txt", false, {}},
+        {"readme.md", "C:\\readme.md", "txt", false, {}},
+        {"Desktop", "C:\\Desktop", "folder", true, {}},
         {"sys", "C:\\sys", "folder", true, {
             {"drivers", "C:\\sys\\drivers", "folder", true, {
                 {"recovery_guide.txt", "C:\\sys\\drivers\\recovery_guide.txt", "txt", false, {}}

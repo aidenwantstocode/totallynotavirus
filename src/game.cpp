@@ -216,7 +216,7 @@ void Game::update() {
     fileExplorer.setBasementDriveVisible(isDriveRecoveryCorrupted);
     
     if (terminal.isInstallerDownloaded() && !hasSpawnedInstaller) {
-        desktop.createIcon("App Installer", "pkg_installer", 40.0f, 310.0f);
+        desktop.createIcon("App Installer", "pkg_installer");
         fileExplorer.addFileToDesktop("amityappsetup.exe", "installer");
         hasSpawnedInstaller = true;
     }

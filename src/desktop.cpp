@@ -41,15 +41,30 @@ void Desktop::init(unsigned int width, unsigned int height) {
     updateClock();
 
     //  DESKTOP ICONS WITH UNIQUE FILE IDS
-    createIcon("todo_list.txt", "txt_todo", 40.0f, 40.0f);     // ID: txt_todo
-    createIcon("Terminal", "cmd", 40.0f, 130.0f);              // ID: cmd
-    createIcon("system_log.txt", "txt_log", 40.0f, 220.0f);    // ID: txt_log
-    createIcon("File Explorer", "file_explorer", 40.0f, 400.0f);    // ID: file_explorer
+    createIcon("File Explorer", "file_explorer");
+    createIcon("Terminal", "cmd");
 }
 
-void Desktop::createIcon(const std::string& title, const std::string& id, float x, float y) {
+void Desktop::createIcon(const std::string& title, const std::string& id) {
+    int slot = 0;
+    while (true) {
+        bool occupied = false;
+        for (const auto& existing : desktopIcons) {
+            if (existing.slotIndex == slot) {
+                occupied = true;
+                break;
+            }
+        }
+        if (!occupied) break;
+        slot++;
+    }
+
     DesktopIcon icon;
     icon.appId = id;
+    icon.slotIndex = slot;
+
+    float x = 40.0f;
+    float y = 40.0f + slot * 90.0f;
 
     icon.body.setSize(sf::Vector2f(40, 40));
     icon.body.setPosition(x, y);
@@ -66,17 +81,6 @@ void Desktop::createIcon(const std::string& title, const std::string& id, float 
     desktopIcons.push_back(icon);
 }
 
-void Desktop::snapToGrid(DesktopIcon& icon) {
-    float gridX = 90.0f;
-    float gridY = 90.0f;
-    float newX = std::round((icon.body.getPosition().x - 40.0f) / gridX) * gridX + 40.0f;
-    float newY = std::round((icon.body.getPosition().y - 40.0f) / gridY) * gridY + 40.0f;
-    if (newX < 40.0f) newX = 40.0f;
-    if (newY < 40.0f) newY = 40.0f;
-    icon.body.setPosition(newX, newY);
-    icon.label.setPosition(newX - 5.f, newY + 45.f);
-}
-
 std::string Desktop::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mousePosF = window.mapPixelToCoords(pixelPos);
@@ -87,32 +91,14 @@ std::string Desktop::handleEvent(const sf::Event& event, const sf::RenderWindow&
             startButton.setFillColor(sf::Color(160, 160, 160)); 
             return "start_menu";
         }
-        for (size_t i = 0; i < desktopIcons.size(); ++i) {
-            if (desktopIcons[i].body.getGlobalBounds().contains(mousePosF)) {
-                if (lastClickedIconIndex == static_cast<int>(i) && doubleClickTimer.getElapsedTime().asMilliseconds() < 300) {
-                    std::cout << "[OS Engine] Icon " << desktopIcons[i].appId << " opened.\n";
-                    return desktopIcons[i].appId;
-                }
-                lastClickedIconIndex = i;
-                doubleClickTimer.restart();
-                draggedIconIndex = i;
-                dragOffset = mousePosF - desktopIcons[i].body.getPosition();
-                break;
+        for (const auto& icon : desktopIcons) {
+            if (icon.body.getGlobalBounds().contains(mousePosF)) {
+                std::cout << "[OS Engine] Icon " << icon.appId << " opened.\n";
+                return icon.appId;
             }
         }
     } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
         startButton.setFillColor(sf::Color(220, 220, 220));
-        if (draggedIconIndex != -1) {
-            snapToGrid(desktopIcons[draggedIconIndex]);
-            draggedIconIndex = -1;
-        }
-    } else if (event.type == sf::Event::MouseMoved) {
-        if (draggedIconIndex != -1) {
-            float newX = mousePosF.x - dragOffset.x;
-            float newY = mousePosF.y - dragOffset.y;
-            desktopIcons[draggedIconIndex].body.setPosition(newX, newY);
-            desktopIcons[draggedIconIndex].label.setPosition(newX - 5.f, newY + 45.f);
-        }
     }
     return "";
 }

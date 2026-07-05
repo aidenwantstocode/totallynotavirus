@@ -9,6 +9,7 @@ struct DesktopIcon {
     sf::RectangleShape body;
     sf::Text label;
     std::string appId;
+    int slotIndex;
 };
 
 class Desktop {
@@ -23,17 +24,12 @@ private:
 
     std::vector<DesktopIcon> desktopIcons;
 
-    int draggedIconIndex = -1;
-    sf::Vector2f dragOffset;
-    sf::Clock doubleClickTimer;
-    int lastClickedIconIndex = -1;
-
     void updateClock();
-    void snapToGrid(DesktopIcon& icon);
 
 public:
     Desktop();
     void init(unsigned int width, unsigned int height);
+    void createIcon(const std::string& title, const std::string& id);
     
     std::string handleEvent(const sf::Event& event, const sf::RenderWindow& window);
     

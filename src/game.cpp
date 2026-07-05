@@ -9,6 +9,7 @@ Game::Game() {
     windowManager.addWindow(&installerWizard);
     windowManager.addWindow(&fileExplorer);
     windowManager.addWindow(&terminal);
+    terminal.setFileExplorer(&fileExplorer);
     windowManager.addWindow(&notepad);
     windowManager.addWindow(&settingsApp);
     windowManager.addWindow(&driveRecovery);
@@ -182,6 +183,24 @@ void Game::processEvents() {
             continue;
         }
 
+        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+            bool popupClicked = false;
+            auto it = activePopups.begin();
+            while (it != activePopups.end()) {
+                sf::FloatRect bounds(it->closeButton.getPosition().x, it->closeButton.getPosition().y, it->closeButton.getSize().x, it->closeButton.getSize().y);
+                if (bounds.contains(mousePos)) {
+                    it = activePopups.erase(it);
+                    popupClicked = true;
+                    std::cout << "[OS Engine] Closed popup alert.\n";
+                    break;
+                }
+                ++it;
+            }
+            if (popupClicked) {
+                continue;
+            }
+        }
+
         bool desktopIconClicked = false;
         VirtualWindow* forcedFocusWindow = nullptr;
         std::string clickedApp = desktop.handleEvent(event, window);
@@ -332,6 +351,7 @@ void Game::update() {
                 activeRam += 10.f;
             }
         }
+        activeRam += fileExplorer.countCorruptedFiles() * 5.f;
 
         if (terminal.getIsOpen()) activeRam += 10.f;
         if (fileExplorer.getIsOpen()) activeRam += 10.f;
@@ -377,6 +397,72 @@ void Game::update() {
         if (cpuTemp > 115.f) cpuTemp = 115.f;
 
         desktop.setMetrics(cpuUtil, ramUtil, cpuTemp, healthActive);
+
+        updatePopups(dt);
+
+        if (driveRecovery.isWaveActive() && currentWave == 0) {
+            float progress = driveRecovery.getProgress();
+            if (progress >= 33.f && progress < 35.f) {
+                currentWave = 1;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 1 started!\n";
+            } else if (progress >= 66.f && progress < 68.f) {
+                currentWave = 2;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 2 started!\n";
+            } else if (progress >= 85.f && progress < 87.f) {
+                currentWave = 3;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 3 started!\n";
+            }
+        }
+
+        if (currentWave > 0) {
+            waveTimer -= dt;
+            popupSpawnTimer -= dt;
+            fileSpawnTimer -= dt;
+
+            float popupInterval = 3.5f;
+            if (currentWave == 2) popupInterval = 2.0f;
+            if (currentWave == 3) popupInterval = 1.2f;
+
+            if (popupSpawnTimer <= 0.f) {
+                spawnPopup();
+                popupSpawnTimer = popupInterval;
+            }
+
+            float fileInterval = 4.5f;
+            if (currentWave == 2) fileInterval = 3.0f;
+            if (currentWave == 3) fileInterval = 2.0f;
+
+            if (fileSpawnTimer <= 0.f) {
+                static int leakIndex = 0;
+                std::string filename = "leak_" + std::to_string(leakIndex++) + ".sys";
+                fileExplorer.addFileToDesktop(filename, "txt");
+                std::cout << "[Virus Wave] Created corrupted file: " << filename << " on desktop\n";
+                fileSpawnTimer = fileInterval;
+            }
+
+            if (waveTimer <= 0.f) {
+                std::cout << "[Virus Wave] Wave " << currentWave << " survived!\n";
+                activePopups.clear();
+                
+                if (currentWave == 1) {
+                    driveRecovery.triggerNextWave(1, 66.f);
+                } else if (currentWave == 2) {
+                    driveRecovery.triggerNextWave(2, 85.f);
+                } else if (currentWave == 3) {
+                    driveRecovery.triggerNextWave(3, 100.f);
+                }
+                currentWave = 0;
+            }
+        }
 
         if (cpuTemp >= 108.f) {
             isOverheating = true;
@@ -514,6 +600,7 @@ void Game::render() {
     
     // draw windows in z-order (unfocused first, focused on top)
     windowManager.drawWindows(window);
+    drawPopups();
     
     desktop.drawStartMenu(window);
     
@@ -590,4 +677,67 @@ void Game::updateWindowView(unsigned int windowWidth, unsigned int windowHeight)
     
     view.setViewport(sf::FloatRect(vpLeft, vpTop, vpWidth, vpHeight));
     window.setView(view);
+}
+
+void Game::spawnPopup() {
+    bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
+    if (antivirusActive) {
+        float level = antivirusApp.getProtectionLevel();
+        float suppressionChance = level / 3.0f; // up to 33.3%
+        if ((rand() % 100) / 100.f < suppressionChance) {
+            std::cout << "[Antivirus] Passively blocked a virus popup spawn attempt!\n";
+            return;
+        }
+    }
+
+    float rx = 50.f + static_cast<float>(rand() % 650);
+    float ry = 50.f + static_cast<float>(rand() % 500);
+    sf::Vector2f vel(0.f, 0.f);
+    if (currentWave >= 2) {
+        vel.x = -120.f + static_cast<float>(rand() % 240);
+        vel.y = -120.f + static_cast<float>(rand() % 240);
+        if (abs(vel.x) < 20.f) vel.x = 60.f;
+        if (abs(vel.y) < 20.f) vel.y = 60.f;
+    }
+    activePopups.push_back(PopupAlert(systemFont, rx, ry, vel));
+    std::cout << "[Virus Wave] Spawned popup alert.\n";
+}
+
+void Game::updatePopups(float dt) {
+    for (auto& popup : activePopups) {
+        if (currentWave >= 2) {
+            sf::Vector2f pos = popup.frame.getPosition();
+            pos += popup.velocity * dt;
+
+            // Bounce off screen boundaries
+            if (pos.x < 0.f) {
+                pos.x = 0.f;
+                popup.velocity.x = -popup.velocity.x;
+            }
+            if (pos.x + popup.frame.getSize().x > 1024.f) {
+                pos.x = 1024.f - popup.frame.getSize().x;
+                popup.velocity.x = -popup.velocity.x;
+            }
+            if (pos.y < 0.f) {
+                pos.y = 0.f;
+                popup.velocity.y = -popup.velocity.y;
+            }
+            if (pos.y + popup.frame.getSize().y > 768.f - 40.f) {
+                pos.y = 768.f - 40.f - popup.frame.getSize().y;
+                popup.velocity.y = -popup.velocity.y;
+            }
+            popup.setPosition(pos.x, pos.y);
+        }
+    }
+}
+
+void Game::drawPopups() {
+    for (const auto& popup : activePopups) {
+        window.draw(popup.frame);
+        window.draw(popup.titleBar);
+        window.draw(popup.closeButton);
+        window.draw(popup.titleText);
+        window.draw(popup.bodyText);
+        window.draw(popup.closeText);
+    }
 }

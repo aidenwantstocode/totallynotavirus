@@ -1,4 +1,5 @@
 #include "apps/terminalApp.hpp"
+#include "apps/fileExplorerApp.hpp"
 #include <iostream>
 
 TerminalApp::TerminalApp() : VirtualWindow("Command Prompt", 500, 350) {
@@ -56,6 +57,21 @@ void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& wi
                 commandHistory += "\n[PKGGET] Connecting to repository...";
                 commandHistory += "\n[PKGGET] Downloading amityappsetup.exe...\n";
             }
+            else if (currentInput.rfind("rm ", 0) == 0 && currentInput.length() > 3) {
+                std::string file = currentInput.substr(3);
+                bool deleted = false;
+                if (fileExplorer) {
+                    deleted = fileExplorer->deleteFileByPath("C:\\" + file);
+                    if (!deleted) {
+                        deleted = fileExplorer->deleteFileByPath("C:\\Desktop\\" + file);
+                    }
+                }
+                if (deleted) {
+                    commandHistory += currentInput + "\n[SYSTEM] File deleted successfully.\n\nC:\\> ";
+                } else {
+                    commandHistory += currentInput + "\n[ERROR] File not found or access denied.\n\nC:\\> ";
+                }
+            }
             else if (!currentInput.empty()) {
                 commandHistory += currentInput + "\n'" + currentInput + "' is not recognized as an internal or external command.\n\nC:\\> ";
             } 
@@ -112,4 +128,8 @@ bool TerminalApp::isRecoveryComplete() const {
 
 bool TerminalApp::isInstallerDownloaded() const {
     return installerDownloaded;
+}
+
+void TerminalApp::setFileExplorer(FileExplorerApp* explorer) {
+    fileExplorer = explorer;
 }

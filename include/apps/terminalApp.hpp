@@ -3,6 +3,8 @@
 #include "virtualWindow.hpp"
 #include <string>
 
+class FileExplorerApp;
+
 class TerminalApp : public VirtualWindow {
 private:
     sf::Font font;
@@ -17,6 +19,7 @@ private:
     std::string currentProcessingCommand = "";
     bool recoveryComplete = false;
     bool installerDownloaded = false;
+    FileExplorerApp* fileExplorer = nullptr;
 
 public:
     TerminalApp();
@@ -26,6 +29,7 @@ public:
     void setDelayMultiplier(float multiplier);
     bool isRecoveryComplete() const;
     bool isInstallerDownloaded() const;
+    void setFileExplorer(FileExplorerApp* explorer);
 };
 
 #endif

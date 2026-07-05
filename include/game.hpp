@@ -83,6 +83,72 @@ private:
     sf::RectangleShape usbCancelButton;
     sf::Text usbCancelText;
 
+    // Wave Management
+    int currentWave = 0;
+    float waveTimer = 0.f;
+    float popupSpawnTimer = 0.f;
+    float fileSpawnTimer = 0.f;
+
+    struct PopupAlert {
+        sf::RectangleShape frame;
+        sf::RectangleShape titleBar;
+        sf::RectangleShape closeButton;
+        sf::Text titleText;
+        sf::Text bodyText;
+        sf::Text closeText;
+        sf::Vector2f velocity;
+        bool isClosed = false;
+
+        PopupAlert(sf::Font& font, float x, float y, sf::Vector2f vel) {
+            velocity = vel;
+            frame.setSize(sf::Vector2f(220.f, 130.f));
+            frame.setFillColor(sf::Color(192, 192, 192));
+            frame.setOutlineThickness(1.5f);
+            frame.setOutlineColor(sf::Color::White);
+
+            titleBar.setSize(sf::Vector2f(220.f, 20.f));
+            titleBar.setFillColor(sf::Color(128, 0, 0));
+
+            closeButton.setSize(sf::Vector2f(16.f, 16.f));
+            closeButton.setFillColor(sf::Color(192, 192, 192));
+            closeButton.setOutlineThickness(1.f);
+            closeButton.setOutlineColor(sf::Color::Black);
+
+            titleText.setFont(font);
+            titleText.setString("ALERT");
+            titleText.setCharacterSize(11);
+            titleText.setFillColor(sf::Color::White);
+            titleText.setStyle(sf::Text::Bold);
+
+            bodyText.setFont(font);
+            bodyText.setString("WARNING!\nConventional memory overflow.\nClose applications.");
+            bodyText.setCharacterSize(10);
+            bodyText.setFillColor(sf::Color::Black);
+
+            closeText.setFont(font);
+            closeText.setString("X");
+            closeText.setCharacterSize(10);
+            closeText.setFillColor(sf::Color::Black);
+            closeText.setStyle(sf::Text::Bold);
+
+            setPosition(x, y);
+        }
+
+        void setPosition(float x, float y) {
+            frame.setPosition(x, y);
+            titleBar.setPosition(x, y);
+            closeButton.setPosition(x + frame.getSize().x - 20.f, y + 2.f);
+            titleText.setPosition(x + 5.f, y + 3.f);
+            bodyText.setPosition(x + 10.f, y + 30.f);
+            closeText.setPosition(x + frame.getSize().x - 15.f, y + 4.f);
+        }
+    };
+
+    std::vector<PopupAlert> activePopups;
+    void spawnPopup();
+    void updatePopups(float dt);
+    void drawPopups();
+
     void initWindow();
     void toggleFullscreen();
     void updateWindowView(unsigned int windowWidth, unsigned int windowHeight);

@@ -22,15 +22,20 @@ FileExplorerApp::FileExplorerApp() : VirtualWindow("File Explorer", 500, 400) {
     contentPane.setOutlineThickness(1);
     contentPane.setOutlineColor(sf::Color(200, 200, 200));
 
-    addressBar.setSize(sf::Vector2f(contentPane.getSize().x - 90, 28));
+    addressBar.setSize(sf::Vector2f(contentPane.getSize().x - 160, 24));
     addressBar.setFillColor(sf::Color(235, 235, 235));
     addressBar.setOutlineThickness(1);
     addressBar.setOutlineColor(sf::Color(190, 190, 190));
 
-    backButton.setSize(sf::Vector2f(70, 24));
+    backButton.setSize(sf::Vector2f(65, 24));
     backButton.setFillColor(sf::Color(210, 210, 210));
     backButton.setOutlineThickness(1);
     backButton.setOutlineColor(sf::Color(170, 170, 170));
+
+    deleteButton.setSize(sf::Vector2f(70, 24));
+    deleteButton.setFillColor(sf::Color(220, 170, 170));
+    deleteButton.setOutlineThickness(1);
+    deleteButton.setOutlineColor(sf::Color(170, 120, 120));
 
     addressText.setFont(font);
     addressText.setCharacterSize(12);
@@ -42,6 +47,12 @@ FileExplorerApp::FileExplorerApp() : VirtualWindow("File Explorer", 500, 400) {
     backText.setCharacterSize(12);
     backText.setFillColor(sf::Color(30, 30, 30));
     backText.setString("Back");
+
+    deleteText.setFont(font);
+    deleteText.setCharacterSize(12);
+    deleteText.setFillColor(sf::Color(50, 10, 10));
+    deleteText.setString("Delete");
+    deleteText.setStyle(sf::Text::Bold);
 
     loadFileSystem();
 
@@ -196,6 +207,12 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
         // Back button
         if (backButton.getGlobalBounds().contains(mousePos) && currentPath != "C:\\" && currentPath != "D:\\") {
             navigateUp();
+            return;
+        }
+
+        // Delete button
+        if (deleteButton.getGlobalBounds().contains(mousePos)) {
+            deleteSelectedFile();
             return;
         }
 
@@ -371,10 +388,14 @@ void FileExplorerApp::updateLayout() {
     sf::Vector2f windowPos = windowFrame.getPosition();
     sidebar.setPosition(windowPos.x + 15, windowPos.y + 45);
     contentPane.setPosition(sidebar.getPosition().x + sidebar.getSize().x + 15, windowPos.y + 45);
+    
     addressBar.setPosition(contentPane.getPosition().x + 5, contentPane.getPosition().y + 5);
-    backButton.setPosition(contentPane.getPosition().x + contentPane.getSize().x - backButton.getSize().x - 10, contentPane.getPosition().y + 5);
+    backButton.setPosition(contentPane.getPosition().x + contentPane.getSize().x - 150, contentPane.getPosition().y + 5);
+    deleteButton.setPosition(contentPane.getPosition().x + contentPane.getSize().x - 80, contentPane.getPosition().y + 5);
+    
     addressText.setPosition(addressBar.getPosition().x + 8, addressBar.getPosition().y + 4);
     backText.setPosition(backButton.getPosition().x + 18, backButton.getPosition().y + 4);
+    deleteText.setPosition(deleteButton.getPosition().x + 14, deleteButton.getPosition().y + 4);
 
     updateShortcuts();
 
@@ -434,6 +455,8 @@ void FileExplorerApp::draw(sf::RenderWindow& window) {
         window.draw(addressText);
         window.draw(backButton);
         window.draw(backText);
+        window.draw(deleteButton);
+        window.draw(deleteText);
 
         for (const auto& shortcut : sidebarShortcuts) {
             if (shortcut.isVisible) {
@@ -469,4 +492,76 @@ void FileExplorerApp::clearCorruptedFiles() {
     recursiveDeleteLeaks(fileSystem);
     refreshVisibleItems();
     updateLayout();
+}
+
+static bool recursiveDelete(std::vector<FileEntry>& items, const std::string& path) {
+    auto it = items.begin();
+    while (it != items.end()) {
+        if (it->path == path) {
+            std::cout << "[VFS] Erased file/folder: " << path << "\n";
+            items.erase(it);
+            return true;
+        }
+        if (it->isFolder) {
+            if (recursiveDelete(it->children, path)) {
+                return true;
+            }
+        }
+        ++it;
+    }
+    return false;
+}
+
+void FileExplorerApp::deleteSelectedFile() {
+    if (selectedIndex < 0 || selectedIndex >= static_cast<int>(visibleItems.size())) {
+        return;
+    }
+    std::string path = visibleItems[selectedIndex].path;
+    std::cout << "[VFS] Deleting selected file: " << path << "\n";
+    
+    bool deleted = false;
+    if (path.rfind("D:\\", 0) == 0) {
+        deleted = recursiveDelete(basementSystem, path);
+    } else {
+        deleted = recursiveDelete(fileSystem, path);
+    }
+
+    if (deleted) {
+        selectItem(-1);
+        refreshVisibleItems();
+        updateLayout();
+    }
+}
+
+bool FileExplorerApp::deleteFileByPath(const std::string& path) {
+    bool deleted = false;
+    if (path.rfind("D:\\", 0) == 0) {
+        deleted = recursiveDelete(basementSystem, path);
+    } else {
+        deleted = recursiveDelete(fileSystem, path);
+    }
+    if (deleted) {
+        selectItem(-1);
+        refreshVisibleItems();
+        updateLayout();
+    }
+    return deleted;
+}
+
+static int recursiveCountLeaks(const std::vector<FileEntry>& items) {
+    int count = 0;
+    for (const auto& item : items) {
+        if (!item.isFolder) {
+            if (item.name.find("leak") != std::string::npos) {
+                count++;
+            }
+        } else {
+            count += recursiveCountLeaks(item.children);
+        }
+    }
+    return count;
+}
+
+int FileExplorerApp::countCorruptedFiles() const {
+    return recursiveCountLeaks(fileSystem) + recursiveCountLeaks(basementSystem);
 }

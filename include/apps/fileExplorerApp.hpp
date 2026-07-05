@@ -30,6 +30,8 @@ private:
     sf::RectangleShape backButton;
     sf::Text addressText;
     sf::Text backText;
+    sf::RectangleShape deleteButton;
+    sf::Text deleteText;
 
     std::vector<sf::RectangleShape> itemBackgrounds;
     std::vector<sf::Text> itemLabels;
@@ -67,6 +69,10 @@ public:
     void setBasementDriveVisible(bool visible);
     void addFileToDesktop(const std::string& filename, const std::string& type);
     void clearCorruptedFiles();
+    void deleteSelectedFile();
+    bool deleteFileByPath(const std::string& path);
+    int countCorruptedFiles() const;
+    const std::vector<FileEntry>& getVisibleItems() const { return visibleItems; }
 };
 
 #endif

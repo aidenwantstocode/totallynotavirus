@@ -5,7 +5,9 @@
 #include <sstream>
 #include <cmath>
 
-Desktop::Desktop() {}
+Desktop::Desktop() {
+    isStartMenuOpen = false;
+}
 
 void Desktop::init(unsigned int width, unsigned int height) {
     background.setSize(sf::Vector2f(width, height));
@@ -37,6 +39,40 @@ void Desktop::init(unsigned int width, unsigned int height) {
     clockText.setFillColor(sf::Color::Black);
     clockText.setStyle(sf::Text::Bold);
     clockText.setPosition(width - 85, height - 30);
+
+    // Start Menu Box Setup
+    float menuWidth = 150.f;
+    float menuHeight = 80.f;
+    float menuX = 5.f;
+    float menuY = taskbar.getPosition().y - menuHeight;
+
+    startMenuBox.setSize(sf::Vector2f(menuWidth, menuHeight));
+    startMenuBox.setFillColor(sf::Color(192, 192, 192));
+    startMenuBox.setOutlineThickness(2.f);
+    startMenuBox.setOutlineColor(sf::Color::Black);
+    startMenuBox.setPosition(menuX, menuY);
+
+    // Settings item setup
+    settingsItem.setSize(sf::Vector2f(menuWidth - 10.f, 30.f));
+    settingsItem.setFillColor(sf::Color(192, 192, 192));
+    settingsItem.setPosition(menuX + 5.f, menuY + 5.f);
+
+    settingsText.setFont(font);
+    settingsText.setString("Control Panel");
+    settingsText.setCharacterSize(12);
+    settingsText.setFillColor(sf::Color::Black);
+    settingsText.setPosition(menuX + 15.f, menuY + 12.f);
+
+    // Shutdown item setup
+    shutdownItem.setSize(sf::Vector2f(menuWidth - 10.f, 30.f));
+    shutdownItem.setFillColor(sf::Color(192, 192, 192));
+    shutdownItem.setPosition(menuX + 5.f, menuY + 40.f);
+
+    shutdownText.setFont(font);
+    shutdownText.setString("Shut Down...");
+    shutdownText.setCharacterSize(12);
+    shutdownText.setFillColor(sf::Color::Black);
+    shutdownText.setPosition(menuX + 15.f, menuY + 47.f);
 
     updateClock();
 
@@ -88,9 +124,30 @@ std::string Desktop::handleEvent(const sf::Event& event, const sf::RenderWindow&
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         if (startButton.getGlobalBounds().contains(mousePosF)) {
             std::cout << "[OS Engine] Start button clicked.\n";
-            startButton.setFillColor(sf::Color(160, 160, 160)); 
-            return "start_menu";
+            isStartMenuOpen = !isStartMenuOpen;
+            startButton.setFillColor(isStartMenuOpen ? sf::Color(160, 160, 160) : sf::Color(220, 220, 220)); 
+            return "";
         }
+
+        if (isStartMenuOpen) {
+            if (settingsItem.getGlobalBounds().contains(mousePosF) || settingsText.getGlobalBounds().contains(mousePosF)) {
+                std::cout << "[OS Engine] Settings clicked.\n";
+                isStartMenuOpen = false;
+                startButton.setFillColor(sf::Color(220, 220, 220));
+                return "open_control_panel";
+            }
+            else if (shutdownItem.getGlobalBounds().contains(mousePosF) || shutdownText.getGlobalBounds().contains(mousePosF)) {
+                std::cout << "[OS Engine] Shutdown clicked.\n";
+                isStartMenuOpen = false;
+                startButton.setFillColor(sf::Color(220, 220, 220));
+                return "shutdown_system";
+            }
+            else if (!startMenuBox.getGlobalBounds().contains(mousePosF)) {
+                isStartMenuOpen = false;
+                startButton.setFillColor(sf::Color(220, 220, 220));
+            }
+        }
+
         for (const auto& icon : desktopIcons) {
             if (icon.body.getGlobalBounds().contains(mousePosF)) {
                 std::cout << "[OS Engine] Icon " << icon.appId << " opened.\n";
@@ -98,7 +155,27 @@ std::string Desktop::handleEvent(const sf::Event& event, const sf::RenderWindow&
             }
         }
     } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
-        startButton.setFillColor(sf::Color(220, 220, 220));
+        if (!isStartMenuOpen) {
+            startButton.setFillColor(sf::Color(220, 220, 220));
+        }
+    } else if (event.type == sf::Event::MouseMoved) {
+        if (isStartMenuOpen) {
+            if (settingsItem.getGlobalBounds().contains(mousePosF) || settingsText.getGlobalBounds().contains(mousePosF)) {
+                settingsItem.setFillColor(sf::Color(0, 0, 128));
+                settingsText.setFillColor(sf::Color::White);
+            } else {
+                settingsItem.setFillColor(sf::Color(192, 192, 192));
+                settingsText.setFillColor(sf::Color::Black);
+            }
+
+            if (shutdownItem.getGlobalBounds().contains(mousePosF) || shutdownText.getGlobalBounds().contains(mousePosF)) {
+                shutdownItem.setFillColor(sf::Color(0, 0, 128));
+                shutdownText.setFillColor(sf::Color::White);
+            } else {
+                shutdownItem.setFillColor(sf::Color(192, 192, 192));
+                shutdownText.setFillColor(sf::Color::Black);
+            }
+        }
     }
     return "";
 }
@@ -128,5 +205,15 @@ void Desktop::draw(sf::RenderWindow& window) {
     for (auto& icon : desktopIcons) {
         window.draw(icon.body);
         window.draw(icon.label);
+    }
+}
+
+void Desktop::drawStartMenu(sf::RenderWindow& window) {
+    if (isStartMenuOpen) {
+        window.draw(startMenuBox);
+        window.draw(settingsItem);
+        window.draw(settingsText);
+        window.draw(shutdownItem);
+        window.draw(shutdownText);
     }
 }

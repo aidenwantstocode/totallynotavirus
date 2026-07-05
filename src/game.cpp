@@ -171,6 +171,14 @@ void Game::processEvents() {
             else if (clickedApp == "file_explorer") {
                 forcedFocusWindow = &fileExplorer;
             }
+            else if (clickedApp == "shutdown_system") {
+                std::cout << "[OS Engine] Shutting down system...\n";
+                window.close();
+            }
+            else if (clickedApp == "open_control_panel") {
+                std::cout << "[OS Engine] Opening Control Panel...\n";
+                // Will implement in next increment
+            }
         }
 
         windowManager.processWindowEvents(event, window, desktopIconClicked, forcedFocusWindow);
@@ -276,6 +284,8 @@ void Game::render() {
     
     // draw windows in z-order (unfocused first, focused on top)
     windowManager.drawWindows(window);
+    
+    desktop.drawStartMenu(window);
     
     if (currentState == GameState::HardwarePrompt || currentState == GameState::HardwareCancelSequence) {
         window.draw(usbPopupFrame);

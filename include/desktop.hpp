@@ -18,6 +18,12 @@ private:
     sf::RectangleShape taskbar;
     
     sf::Font font;
+    bool isStartMenuOpen;
+    sf::RectangleShape startMenuBox;
+    sf::RectangleShape settingsItem;
+    sf::RectangleShape shutdownItem;
+    sf::Text settingsText;
+    sf::Text shutdownText;
     sf::RectangleShape startButton;
     sf::Text startText;
     sf::Text clockText;
@@ -35,8 +41,7 @@ public:
     
     void update();
     void draw(sf::RenderWindow& window);
-    
-    void createIcon(const std::string& title, const std::string& id, float x, float y);
+    void drawStartMenu(sf::RenderWindow& window);
 };
 
 #endif

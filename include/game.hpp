@@ -64,6 +64,7 @@ private:
 
     void initWindow();
     void toggleFullscreen();
+    void updateWindowView(unsigned int windowWidth, unsigned int windowHeight);
 
 public:
     Game();

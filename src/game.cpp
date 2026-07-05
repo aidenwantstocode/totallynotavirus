@@ -92,7 +92,7 @@ Game::Game() {
 }
 
 void Game::initWindow() {
-    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Titlebar | sf::Style::Close);
+    window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Default);
     window.setFramerateLimit(60);
 }
 
@@ -111,6 +111,9 @@ void Game::processEvents() {
     while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             window.close();
+        }
+        if (event.type == sf::Event::Resized) {
+            updateWindowView(event.size.width, event.size.height);
         }
 
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
@@ -338,9 +341,33 @@ void Game::toggleFullscreen() {
     isFullscreen = !isFullscreen;
     window.close();
     if (isFullscreen) {
-        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Fullscreen);
+        window.create(sf::VideoMode::getDesktopMode(), "totallynotavirus", sf::Style::None);
     } else {
-        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Titlebar | sf::Style::Close);
+        window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "totallynotavirus", sf::Style::Default);
     }
     window.setFramerateLimit(60);
+    updateWindowView(window.getSize().x, window.getSize().y);
+}
+
+void Game::updateWindowView(unsigned int windowWidth, unsigned int windowHeight) {
+    float targetAspectRatio = 1024.f / 768.f;
+    float windowAspectRatio = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
+    
+    sf::View view(sf::FloatRect(0.f, 0.f, 1024.f, 768.f));
+    float vpWidth, vpHeight, vpLeft, vpTop;
+    
+    if (windowAspectRatio > targetAspectRatio) {
+        vpWidth = targetAspectRatio / windowAspectRatio;
+        vpHeight = 1.f;
+        vpLeft = (1.f - vpWidth) / 2.f;
+        vpTop = 0.f;
+    } else {
+        vpWidth = 1.f;
+        vpHeight = windowAspectRatio / targetAspectRatio;
+        vpLeft = 0.f;
+        vpTop = (1.f - vpHeight) / 2.f;
+    }
+    
+    view.setViewport(sf::FloatRect(vpLeft, vpTop, vpWidth, vpHeight));
+    window.setView(view);
 }

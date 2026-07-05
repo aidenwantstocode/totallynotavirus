@@ -12,6 +12,8 @@ Game::Game() {
     windowManager.addWindow(&notepad);
     windowManager.addWindow(&settingsApp);
     windowManager.addWindow(&driveRecovery);
+    windowManager.addWindow(&antivirusApp);
+    windowManager.addWindow(&defragApp);
 
     // BSOD UI Setup
     bsodBg.setSize(sf::Vector2f(SCREEN_WIDTH, SCREEN_HEIGHT));
@@ -226,6 +228,16 @@ void Game::processEvents() {
                 driveRecovery.setIsOpen(true);
                 forcedFocusWindow = &driveRecovery;
             }
+            else if (clickedApp == "antivirus") {
+                std::cout << "[OS Engine] Opening Antivirus...\n";
+                antivirusApp.setIsOpen(true);
+                forcedFocusWindow = &antivirusApp;
+            }
+            else if (clickedApp == "abstractor") {
+                std::cout << "[OS Engine] Opening Memory Abstractor...\n";
+                defragApp.setIsOpen(true);
+                forcedFocusWindow = &defragApp;
+            }
         }
 
         windowManager.processWindowEvents(event, window, desktopIconClicked, forcedFocusWindow);
@@ -311,8 +323,15 @@ void Game::update() {
         bool defragActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("abstractor");
 
         if (healthActive) activeRam += 10.f;
-        if (antivirusActive) activeRam += 15.f;
-        if (defragActive) activeRam += 15.f;
+        if (antivirusActive) {
+            activeRam += 5.f + (antivirusApp.getProtectionLevel() * 10.f);
+        }
+        if (defragActive) {
+            activeRam += 15.f;
+            if (defragApp.getIsDefragmenting()) {
+                activeRam += 10.f;
+            }
+        }
 
         if (terminal.getIsOpen()) activeRam += 10.f;
         if (fileExplorer.getIsOpen()) activeRam += 10.f;
@@ -328,7 +347,12 @@ void Game::update() {
         if (fileExplorer.getIsOpen()) activeCpu += 5.f;
         if (notepad.getIsOpen()) activeCpu += 2.f;
         if (driveRecovery.getIsOpen() && driveRecovery.getIsRunning()) activeCpu += 15.f;
-        if (antivirusActive) activeCpu += 10.f;
+        if (antivirusActive) {
+            activeCpu += 5.f + (antivirusApp.getProtectionLevel() * 10.f);
+        }
+        if (defragActive && defragApp.getIsDefragmenting()) {
+            activeCpu += 30.f;
+        }
 
         cpuUtil = activeCpu;
         if (cpuUtil > 100.f) cpuUtil = 100.f;
@@ -400,7 +424,14 @@ void Game::update() {
     installerWizard.update();
     fileExplorer.update();
     driveRecovery.update();
+    antivirusApp.update();
+    defragApp.update();
     glitchManager.update();
+
+    if (defragApp.checkAndClearCleanRequest()) {
+        std::cout << "[OS Kernel] Memory Abstractor optimized heap. Cleaning memory leaks...\n";
+        fileExplorer.clearCorruptedFiles();
+    }
 
     if (terminal.isRecoveryComplete()) {
         isDriveRecoveryCorrupted = true;
@@ -449,6 +480,12 @@ void Game::update() {
     if (installerWizard.getIsFinalized() && !hasRecalculatedPerformance) {
         recalculateSystemPerformance();
         desktop.createIcon("Drive Recovery", "drive_recovery");
+        if (installerWizard.isComponentChecked("antivirus")) {
+            desktop.createIcon("Amity Shield", "antivirus");
+        }
+        if (installerWizard.isComponentChecked("abstractor")) {
+            desktop.createIcon("Mem Abstractor", "abstractor");
+        }
         hasRecalculatedPerformance = true;
     }
 }

@@ -66,6 +66,7 @@ public:
     void clearActivationRequest() { activationRequested = false; }
     void setBasementDriveVisible(bool visible);
     void addFileToDesktop(const std::string& filename, const std::string& type);
+    void clearCorruptedFiles();
 };
 
 #endif

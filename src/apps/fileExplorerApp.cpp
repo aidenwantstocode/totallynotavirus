@@ -448,3 +448,25 @@ void FileExplorerApp::draw(sf::RenderWindow& window) {
         }
     }
 }
+
+static void recursiveDeleteLeaks(std::vector<FileEntry>& items) {
+    auto it = items.begin();
+    while (it != items.end()) {
+        if (!it->isFolder) {
+            if (it->name.find("leak") != std::string::npos) {
+                std::cout << "[VFS] Deleting corrupted file: " << it->path << "\n";
+                it = items.erase(it);
+                continue;
+            }
+        } else {
+            recursiveDeleteLeaks(it->children);
+        }
+        ++it;
+    }
+}
+
+void FileExplorerApp::clearCorruptedFiles() {
+    recursiveDeleteLeaks(fileSystem);
+    refreshVisibleItems();
+    updateLayout();
+}

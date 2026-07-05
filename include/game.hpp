@@ -10,6 +10,8 @@
 #include "apps/fileExplorerApp.hpp"
 #include "apps/settingsApp.hpp"
 #include "apps/driveRecoveryApp.hpp"
+#include "apps/antivirusApp.hpp"
+#include "apps/defragApp.hpp"
 #include "engine/windowManager.hpp"
 
 enum class GameState {
@@ -33,6 +35,8 @@ private:
     FileExplorerApp fileExplorer;
     SettingsApp settingsApp;
     DriveRecoveryApp driveRecovery;
+    AntivirusApp antivirusApp;
+    DefragApp defragApp;
     WindowManager windowManager;
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;

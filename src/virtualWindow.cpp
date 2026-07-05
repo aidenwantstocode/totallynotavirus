@@ -83,24 +83,30 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
 
     //drag release logic
     if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
-        isDragged = false;
+        if (isDragged) {
+            isDragged = false;
+            
+            float x = windowFrame.getPosition().x;
+            float y = windowFrame.getPosition().y;
+            float winWidth = windowFrame.getSize().x;
+            float winHeight = windowFrame.getSize().y;
+
+            // Y bounds: Titlebar must stay inside desktop area (0 to 768 - 40 - 30)
+            if (y < 0.f) y = 0.f;
+            if (y > 768.f - 40.f - 30.f) y = 768.f - 40.f - 30.f;
+
+            // X bounds: at least 40px of titlebar must remain visible on screen
+            if (x < -winWidth + 40.f) x = -winWidth + 40.f;
+            if (x > 1024.f - 40.f) x = 1024.f - 40.f;
+
+            setPosition(x, y);
+        }
     }
 
     //drag movement logic
     if (isDragged && event.type == sf::Event::MouseMoved) {
         float newX = mousePos.x - dragOffset.x;
         float newY = mousePos.y - dragOffset.y;
-        
-        //lock window inside the main render window bounds
-        if (newX < 0) newX = 0;
-        if (newY < 0) newY = 0;
-
-        if (newX + windowFrame.getSize().x > window.getSize().x)
-            newX = window.getSize().x - windowFrame.getSize().x;
-
-        if (newY + windowFrame.getSize().y > window.getSize().y - 40)
-            newY = (window.getSize().y - 40) - windowFrame.getSize().y;
-
         setPosition(newX, newY);
     }
 }

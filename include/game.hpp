@@ -42,7 +42,7 @@ private:
     sf::RectangleShape bsodBg;
     sf::Text bsodText;
     sf::Clock bsodClock;
-    float bsodDuration = 6.0f;
+    float bsodDuration = 12.0f;
 
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;
@@ -52,6 +52,7 @@ private:
     float cpuTemp;
     float overheatTimer;
     bool isOverheating;
+    bool isInputFrozen = false;
     bool hasRecalculatedPerformance = false;
     bool hasSpawnedInstaller = false;
     void recalculateSystemPerformance();

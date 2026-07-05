@@ -43,10 +43,11 @@ Game::Game() {
     cpuTemp = 40.f;
     overheatTimer = 5.f;
     isOverheating = false;
+    isInputFrozen = false;
 
     currentState = GameState::BootSequence;
-    bootDuration = 5.0f;
-    usbTriggerDelay = 10.0f;
+    bootDuration = 8.0f;
+    usbTriggerDelay = 25.0f;
     usbPluggedIn = false;
     
     if (!systemFont.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
@@ -148,6 +149,10 @@ void Game::processEvents() {
             updateWindowView(event.size.width, event.size.height);
         }
 
+        if (isInputFrozen) {
+            continue;
+        }
+
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
@@ -166,8 +171,8 @@ void Game::processEvents() {
             continue; // Block all other events during hardware prompt
         }
 
-        if (currentState != GameState::NormalOS && currentState != GameState::ActiveOS) {
-            continue; // Block events during boot sequence
+        if (currentState != GameState::NormalOS && currentState != GameState::ActiveOS && currentState != GameState::CorruptedOS) {
+            continue; // Block events during boot sequence, BSOD, etc.
         }
         
         if (installerWizard.getIsOpen() && installerWizard.getIsErrorOpen()) {
@@ -240,6 +245,7 @@ void Game::update() {
                 driveRecovery.enterCorruptedMode();
                 driveRecovery.setIsOpen(true);
                 windowManager.bringToFront(&driveRecovery);
+                isInputFrozen = false;
             } else {
                 currentState = GameState::NormalOS;
             }
@@ -251,6 +257,13 @@ void Game::update() {
     if (settingsApp.isFullscreenToggleRequested()) {
         settingsApp.clearFullscreenToggleRequest();
         toggleFullscreen();
+    }
+
+    if (driveRecovery.getIsRunning() && driveRecovery.getProgress() >= 99.f) {
+        isInputFrozen = true;
+        if (rand() % 15 == 0) {
+            glitchManager.triggerJumpscare();
+        }
     }
 
     if (driveRecovery.isBsodTriggered()) {

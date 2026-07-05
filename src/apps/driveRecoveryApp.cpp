@@ -106,7 +106,7 @@ void DriveRecoveryApp::update() {
     if (isRunning) {
         if (!corruptedMode) {
             float elapsed = progressClock.getElapsedTime().asSeconds();
-            float newProgress = (elapsed / 12.f) * 100.f;
+            float newProgress = (elapsed / 35.f) * 100.f;
 
             if (newProgress > progress) {
                 int oldPercent = static_cast<int>(progress);
@@ -115,7 +115,7 @@ void DriveRecoveryApp::update() {
 
                 if (progress >= 99.f) {
                     progress = 99.f;
-                    if (elapsed >= 15.f) { // 12s to hit 99%, 3s freeze
+                    if (elapsed >= 43.f) { // 35s to hit 99%, 8s freeze
                         bsodTriggered = true;
                         isRunning = false;
                     }

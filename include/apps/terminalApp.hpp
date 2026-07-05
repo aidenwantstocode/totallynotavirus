@@ -21,6 +21,10 @@ private:
     bool installerDownloaded = false;
     FileExplorerApp* fileExplorer = nullptr;
 
+    bool regsyncSuccess = false;
+    bool fat32Success = false;
+    bool safeSuccess = false;
+
 public:
     TerminalApp();
     void handleEvent(const sf::Event& event, const sf::RenderWindow& window) override;
@@ -30,6 +34,10 @@ public:
     bool isRecoveryComplete() const;
     bool isInstallerDownloaded() const;
     void setFileExplorer(FileExplorerApp* explorer);
+
+    bool checkAndClearRegsync();
+    bool checkAndClearFat32();
+    bool checkAndClearSafe();
 };
 
 #endif

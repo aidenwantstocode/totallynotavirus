@@ -124,6 +124,18 @@ void Desktop::createIcon(const std::string& title, const std::string& id) {
     desktopIcons.push_back(icon);
 }
 
+void Desktop::removeIcon(const std::string& id) {
+    auto it = desktopIcons.begin();
+    while (it != desktopIcons.end()) {
+        if (it->appId == id) {
+            std::cout << "[Desktop] Removed shortcut for " << id << "\n";
+            desktopIcons.erase(it);
+            return;
+        }
+        ++it;
+    }
+}
+
 std::string Desktop::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mousePosF = window.mapPixelToCoords(pixelPos);

@@ -41,6 +41,7 @@ public:
     Desktop();
     void init(unsigned int width, unsigned int height);
     void createIcon(const std::string& title, const std::string& id);
+    void removeIcon(const std::string& id);
     
     std::string handleEvent(const sf::Event& event, const sf::RenderWindow& window);
     

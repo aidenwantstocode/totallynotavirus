@@ -1,5 +1,8 @@
 #include "virtualWindow.hpp"
 #include <iostream>
+#include <cmath>
+
+float VirtualWindow::ramLagMultiplier = 1.0f;
 
 VirtualWindow::VirtualWindow(const std::string& title, float width, float height) {
     isOpen = true;
@@ -38,15 +41,23 @@ VirtualWindow::VirtualWindow(const std::string& title, float width, float height
     closeText.setStyle(sf::Text::Bold);
 
     //window default position
-    setPosition(200, 150);
+    currentPos = sf::Vector2f(200.f, 150.f);
+    targetPos = currentPos;
+    windowFrame.setPosition(currentPos);
+    titleBar.setPosition(currentPos);
+    titleText.setPosition(currentPos.x + 10.f, currentPos.y + 5.f);
+    closeButton.setPosition(currentPos.x + width - 26.f, currentPos.y + 4.f);
+    closeText.setPosition(currentPos.x + width - 20.f, currentPos.y + 7.f);
+}
+
+void VirtualWindow::triggerOpenAnimation(sf::Vector2f iconPos) {
+    isOpening = true;
+    animTime = 0.f;
+    animStartPos = iconPos;
 }
 
 void VirtualWindow::setPosition(float x, float y) {
-    windowFrame.setPosition(x, y);
-    titleBar.setPosition(x, y);
-    titleText.setPosition(x + 10, y + 5);
-    closeButton.setPosition(x + windowFrame.getSize().x - 26, y + 4);
-    closeText.setPosition(x + windowFrame.getSize().x - 20, y + 7);
+    targetPos = sf::Vector2f(x, y);
 }
 
 void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
@@ -123,11 +134,57 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
 }
 
 void VirtualWindow::update() {
-    //upcoming: window animation effects
+    if (isOpening) {
+        static sf::Clock animClock;
+        float dt = animClock.restart().asSeconds();
+        if (dt > 0.1f) dt = 0.1f;
+
+        animTime += dt * (5.0f / ramLagMultiplier);
+        if (animTime >= 1.0f) {
+            animTime = 1.0f;
+            isOpening = false;
+        }
+    }
+
+    static sf::Clock dragClock;
+    float dragDt = dragClock.restart().asSeconds();
+    if (dragDt > 0.1f) dragDt = 0.1f;
+
+    float lerpFactor = 15.f * dragDt / ramLagMultiplier;
+    if (lerpFactor > 1.f) lerpFactor = 1.f;
+    if (lerpFactor < 0.01f) lerpFactor = 0.01f;
+
+    currentPos += (targetPos - currentPos) * lerpFactor;
+
+    if (std::abs(currentPos.x - targetPos.x) < 0.5f && std::abs(currentPos.y - targetPos.y) < 0.5f) {
+        currentPos = targetPos;
+    }
+
+    windowFrame.setPosition(currentPos);
+    titleBar.setPosition(currentPos);
+    titleText.setPosition(currentPos.x + 10.f, currentPos.y + 5.f);
+    closeButton.setPosition(currentPos.x + windowFrame.getSize().x - 26.f, currentPos.y + 4.f);
+    closeText.setPosition(currentPos.x + windowFrame.getSize().x - 20.f, currentPos.y + 7.f);
 }
 
 void VirtualWindow::draw(sf::RenderWindow& window) {
     if (!isOpen) return;
+
+    if (isOpening) {
+        sf::FloatRect finalBounds = windowFrame.getGlobalBounds();
+        float x = animStartPos.x + (finalBounds.left - animStartPos.x) * animTime;
+        float y = animStartPos.y + (finalBounds.top - animStartPos.y) * animTime;
+        float w = 40.f + (finalBounds.width - 40.f) * animTime;
+        float h = 40.f + (finalBounds.height - 40.f) * animTime;
+
+        sf::RectangleShape wireframe(sf::Vector2f(w, h));
+        wireframe.setPosition(x, y);
+        wireframe.setFillColor(sf::Color::Transparent);
+        wireframe.setOutlineThickness(1.5f);
+        wireframe.setOutlineColor(sf::Color(0, 0, 128));
+        window.draw(wireframe);
+        return;
+    }
 
     window.draw(windowFrame);
     window.draw(titleBar);

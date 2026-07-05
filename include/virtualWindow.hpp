@@ -18,9 +18,20 @@ protected:
     bool hasFocus;
     sf::Vector2f dragOffset;
 
+    sf::Vector2f targetPos;
+    sf::Vector2f currentPos;
+    bool isOpening = false;
+    float animTime = 0.f;
+    sf::Vector2f animStartPos;
+
 public:
+    static float ramLagMultiplier;
+
     VirtualWindow(const std::string& title, float width, float height);
     virtual ~VirtualWindow() = default;
+
+    void triggerOpenAnimation(sf::Vector2f iconPos);
+    bool getIsOpening() const { return isOpening; }
 
     //click and drag mouse FOR THIS WINDOW
     virtual void handleEvent(const sf::Event& event, const sf::RenderWindow& window);

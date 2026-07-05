@@ -2,6 +2,7 @@
 #include <iostream>
 
 NotepadApp::NotepadApp() : VirtualWindow("Notepad", 400, 300) {
+    isOpen = false;
     windowFrame.setFillColor(sf::Color(255, 255, 255));
 
     if (!font.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {

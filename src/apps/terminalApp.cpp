@@ -2,6 +2,7 @@
 #include <iostream>
 
 TerminalApp::TerminalApp() : VirtualWindow("Command Prompt", 500, 350) {
+    isOpen = false;
     windowFrame.setFillColor(sf::Color(0, 0, 0));
 
     if (!font.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {

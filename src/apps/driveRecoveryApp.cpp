@@ -2,6 +2,7 @@
 #include <iostream>
 
 DriveRecoveryApp::DriveRecoveryApp() : VirtualWindow("Drive Recovery App", 400, 300) {
+    isOpen = false;
     if (!font.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
         std::cerr << "[ERROR] DriveRecoveryApp FAILED TO LOAD FONT\n";
     }

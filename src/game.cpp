@@ -38,6 +38,11 @@ Game::Game() {
     );
 
     systemDelayMultiplier = 1.0f;
+    cpuUtil = 10.f;
+    ramUtil = 10.f;
+    cpuTemp = 40.f;
+    overheatTimer = 5.f;
+    isOverheating = false;
 
     currentState = GameState::BootSequence;
     bootDuration = 5.0f;
@@ -280,6 +285,87 @@ void Game::update() {
             stateClock.restart();
         }
         return;
+    }
+
+    static sf::Clock dtClock;
+    float dt = dtClock.restart().asSeconds();
+    if (dt > 0.1f) dt = 0.1f;
+
+    if (currentState == GameState::NormalOS || currentState == GameState::ActiveOS || currentState == GameState::CorruptedOS) {
+        float activeRam = 10.f;
+        bool healthActive = installerWizard.isComponentChecked("health_monitor");
+        bool antivirusActive = installerWizard.isComponentChecked("antivirus");
+        bool defragActive = installerWizard.isComponentChecked("abstractor");
+
+        if (healthActive) activeRam += 10.f;
+        if (antivirusActive) activeRam += 15.f;
+        if (defragActive) activeRam += 15.f;
+
+        if (terminal.getIsOpen()) activeRam += 10.f;
+        if (fileExplorer.getIsOpen()) activeRam += 10.f;
+        if (notepad.getIsOpen()) activeRam += 5.f;
+        if (driveRecovery.getIsOpen()) activeRam += 15.f;
+        if (settingsApp.getIsOpen()) activeRam += 10.f;
+
+        ramUtil = activeRam;
+        if (ramUtil > 100.f) ramUtil = 100.f;
+
+        float activeCpu = 10.f;
+        if (terminal.getIsOpen()) activeCpu += 5.f;
+        if (fileExplorer.getIsOpen()) activeCpu += 5.f;
+        if (notepad.getIsOpen()) activeCpu += 2.f;
+        if (driveRecovery.getIsOpen() && driveRecovery.getIsRunning()) activeCpu += 15.f;
+        if (antivirusActive) activeCpu += 10.f;
+
+        cpuUtil = activeCpu;
+        if (cpuUtil > 100.f) cpuUtil = 100.f;
+
+        float targetTemp = 40.f;
+        if (cpuUtil <= 30.f) {
+            targetTemp = 40.f;
+        } else if (cpuUtil <= 70.f) {
+            targetTemp = 40.f + ((cpuUtil - 30.f) / 40.f) * 50.f;
+        } else {
+            targetTemp = 90.f + ((cpuUtil - 70.f) / 30.f) * 20.f;
+        }
+
+        float heatSpeed = 0.08f;
+        if (cpuUtil > 70.f) heatSpeed = 0.15f;
+        if (cpuUtil >= 95.f) heatSpeed = 0.25f;
+
+        float tempDiff = targetTemp - cpuTemp;
+        cpuTemp += tempDiff * heatSpeed * dt;
+
+        if (cpuTemp < 40.f) cpuTemp = 40.f;
+        if (cpuTemp > 115.f) cpuTemp = 115.f;
+
+        desktop.setMetrics(cpuUtil, ramUtil, cpuTemp, healthActive);
+
+        if (cpuTemp >= 108.f) {
+            isOverheating = true;
+            overheatTimer -= dt;
+            if (rand() % 30 == 0) {
+                glitchManager.triggerJumpscare();
+            }
+            if (overheatTimer <= 0.f) {
+                std::cout << "[OS Engine] CPU Overheat! System crashed.\n";
+                cpuTemp = 40.f;
+                cpuUtil = 10.f;
+                ramUtil = 10.f;
+                overheatTimer = 5.f;
+                isOverheating = false;
+                currentState = GameState::BootSequence;
+                bootDuration = 4.0f;
+                stateClock.restart();
+
+                float currentProg = driveRecovery.getProgress();
+                driveRecovery.setProgress(std::max(0.f, currentProg - 10.f));
+                driveRecovery.setWaveActive(false);
+            }
+        } else {
+            isOverheating = false;
+            overheatTimer = 5.f;
+        }
     }
 
     if (currentState == GameState::NormalOS) {

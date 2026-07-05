@@ -40,6 +40,13 @@ void Desktop::init(unsigned int width, unsigned int height) {
     clockText.setStyle(sf::Text::Bold);
     clockText.setPosition(width - 85, height - 30);
 
+    metricsText.setFont(font);
+    metricsText.setCharacterSize(12);
+    metricsText.setFillColor(sf::Color::Black);
+    metricsText.setStyle(sf::Text::Bold);
+    metricsText.setPosition(width - 340.f, height - 28.f);
+    showMetrics = false;
+
     // Start Menu Box Setup
     float menuWidth = 150.f;
     float menuHeight = 80.f;
@@ -201,6 +208,9 @@ void Desktop::draw(sf::RenderWindow& window) {
     window.draw(startButton);
     window.draw(startText);
     window.draw(clockText);
+    if (showMetrics) {
+        window.draw(metricsText);
+    }
 
     for (auto& icon : desktopIcons) {
         window.draw(icon.body);
@@ -223,5 +233,28 @@ void Desktop::setCorruptedTheme(bool enabled) {
         background.setFillColor(sf::Color(120, 0, 0));
     } else {
         background.setFillColor(sf::Color(0, 128, 128));
+    }
+}
+
+void Desktop::setMetrics(float cpu, float ram, float temp, bool show) {
+    metricsCpu = cpu;
+    metricsRam = ram;
+    metricsTemp = temp;
+    showMetrics = show;
+
+    if (showMetrics) {
+        std::stringstream ss;
+        ss << "CPU: " << static_cast<int>(metricsCpu) << "% | "
+           << "RAM: " << static_cast<int>(metricsRam) << "% | "
+           << "TEMP: " << static_cast<int>(metricsTemp) << "C";
+        metricsText.setString(ss.str());
+
+        if (metricsTemp >= 98.f || metricsCpu >= 95.f) {
+            metricsText.setFillColor(sf::Color(255, 0, 0)); // Red
+        } else if (metricsTemp >= 70.f || metricsCpu >= 70.f) {
+            metricsText.setFillColor(sf::Color(230, 120, 0)); // Orange
+        } else {
+            metricsText.setFillColor(sf::Color::Black);
+        }
     }
 }

@@ -47,6 +47,11 @@ private:
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;
     bool isNextBootCorrupted = false;
+    float cpuUtil;
+    float ramUtil;
+    float cpuTemp;
+    float overheatTimer;
+    bool isOverheating;
     bool hasRecalculatedPerformance = false;
     bool hasSpawnedInstaller = false;
     void recalculateSystemPerformance();

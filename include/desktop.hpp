@@ -27,6 +27,11 @@ private:
     sf::RectangleShape startButton;
     sf::Text startText;
     sf::Text clockText;
+    sf::Text metricsText;
+    bool showMetrics;
+    float metricsCpu;
+    float metricsRam;
+    float metricsTemp;
 
     std::vector<DesktopIcon> desktopIcons;
 
@@ -43,6 +48,7 @@ public:
     void draw(sf::RenderWindow& window);
     void drawStartMenu(sf::RenderWindow& window);
     void setCorruptedTheme(bool enabled);
+    void setMetrics(float cpu, float ram, float temp, bool show);
 };
 
 #endif

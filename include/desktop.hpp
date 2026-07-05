@@ -42,6 +42,7 @@ public:
     void update();
     void draw(sf::RenderWindow& window);
     void drawStartMenu(sf::RenderWindow& window);
+    void setCorruptedTheme(bool enabled);
 };
 
 #endif

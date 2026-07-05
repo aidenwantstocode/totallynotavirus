@@ -217,3 +217,11 @@ void Desktop::drawStartMenu(sf::RenderWindow& window) {
         window.draw(shutdownText);
     }
 }
+
+void Desktop::setCorruptedTheme(bool enabled) {
+    if (enabled) {
+        background.setFillColor(sf::Color(120, 0, 0));
+    } else {
+        background.setFillColor(sf::Color(0, 128, 128));
+    }
+}

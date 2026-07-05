@@ -9,6 +9,7 @@
 #include "apps/softwareInstallerApp.hpp"
 #include "apps/fileExplorerApp.hpp"
 #include "apps/settingsApp.hpp"
+#include "apps/driveRecoveryApp.hpp"
 #include "engine/windowManager.hpp"
 
 enum class GameState {
@@ -16,7 +17,9 @@ enum class GameState {
     NormalOS,
     HardwarePrompt,
     HardwareCancelSequence,
-    ActiveOS
+    ActiveOS,
+    BSOD,
+    CorruptedOS
 };
 
 class Game {
@@ -29,13 +32,21 @@ private:
     SoftwareInstallerApp installerWizard;
     FileExplorerApp fileExplorer;
     SettingsApp settingsApp;
+    DriveRecoveryApp driveRecovery;
     WindowManager windowManager;
     const unsigned int SCREEN_WIDTH = 1024;
     const unsigned int SCREEN_HEIGHT = 768;
     bool isFullscreen = false;
 
+    // BSOD UI
+    sf::RectangleShape bsodBg;
+    sf::Text bsodText;
+    sf::Clock bsodClock;
+    float bsodDuration = 6.0f;
+
     float systemDelayMultiplier;
     bool isDriveRecoveryCorrupted = false;
+    bool isNextBootCorrupted = false;
     bool hasRecalculatedPerformance = false;
     bool hasSpawnedInstaller = false;
     void recalculateSystemPerformance();

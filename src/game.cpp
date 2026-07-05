@@ -11,6 +11,31 @@ Game::Game() {
     windowManager.addWindow(&terminal);
     windowManager.addWindow(&notepad);
     windowManager.addWindow(&settingsApp);
+    windowManager.addWindow(&driveRecovery);
+
+    // BSOD UI Setup
+    bsodBg.setSize(sf::Vector2f(SCREEN_WIDTH, SCREEN_HEIGHT));
+    bsodBg.setFillColor(sf::Color(0, 0, 150));
+    bsodBg.setPosition(0, 0);
+
+    bsodText.setFont(systemFont);
+    bsodText.setCharacterSize(14);
+    bsodText.setFillColor(sf::Color::White);
+    bsodText.setPosition(40.f, 40.f);
+    bsodText.setString(
+        "A problem has been detected and Amity OS has been shut down to prevent damage\n"
+        "to your computer.\n\n"
+        "UNEXPECTED_KERNEL_MODE_TRAP\n\n"
+        "If this is the first time you've seen this Stop error screen,\n"
+        "restart your computer. If this screen appears again, follow\n"
+        "these steps:\n\n"
+        "Check to make sure any new hardware or software is properly installed.\n"
+        "If this is a new installation, ask your hardware or software manufacturer\n"
+        "for any Amity OS updates you might need.\n\n"
+        "Technical information:\n"
+        "*** STOP: 0x0000007F (0x00000008, 0x00000000, 0x00000000, 0x00000000)\n"
+        "*** amitydisk.sys - Address F892A203 base at F8929000, DateStamp 36b072a2"
+    );
 
     systemDelayMultiplier = 1.0f;
 
@@ -22,6 +47,8 @@ Game::Game() {
     if (!systemFont.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
         std::cerr << "[ERROR] Game FAILED TO LOAD FONT\n";
     }
+
+    bsodText.setFont(systemFont);
 
     // Boot UI
     biosText.setFont(systemFont);
@@ -184,6 +211,11 @@ void Game::processEvents() {
                 settingsApp.setIsOpen(true);
                 forcedFocusWindow = &settingsApp;
             }
+            else if (clickedApp == "drive_recovery") {
+                std::cout << "[OS Engine] Opening Drive Recovery App...\n";
+                driveRecovery.setIsOpen(true);
+                forcedFocusWindow = &driveRecovery;
+            }
         }
 
         windowManager.processWindowEvents(event, window, desktopIconClicked, forcedFocusWindow);
@@ -197,7 +229,15 @@ void Game::update() {
         bootProgressBar.setSize(sf::Vector2f(progress * 400.f, 20.f));
         
         if (elapsed > bootDuration) {
-            currentState = GameState::NormalOS;
+            if (isNextBootCorrupted) {
+                currentState = GameState::CorruptedOS;
+                desktop.setCorruptedTheme(true);
+                driveRecovery.enterCorruptedMode();
+                driveRecovery.setIsOpen(true);
+                windowManager.bringToFront(&driveRecovery);
+            } else {
+                currentState = GameState::NormalOS;
+            }
             stateClock.restart();
         }
         return;
@@ -206,6 +246,40 @@ void Game::update() {
     if (settingsApp.isFullscreenToggleRequested()) {
         settingsApp.clearFullscreenToggleRequest();
         toggleFullscreen();
+    }
+
+    if (driveRecovery.isBsodTriggered()) {
+        driveRecovery.clearBsodTriggered();
+        currentState = GameState::BSOD;
+        bsodClock.restart();
+        
+        installerWizard.setIsOpen(false);
+        fileExplorer.setIsOpen(false);
+        terminal.setIsOpen(false);
+        notepad.setIsOpen(false);
+        settingsApp.setIsOpen(false);
+        driveRecovery.setIsOpen(false);
+    }
+
+    if (currentState == GameState::BSOD) {
+        float elapsed = bsodClock.getElapsedTime().asSeconds();
+        if (elapsed > 2.0f && rand() % 5 == 0) {
+            std::string str = bsodText.getString();
+            if (!str.empty()) {
+                size_t index = rand() % str.length();
+                if (str[index] != '\n' && str[index] != ' ') {
+                    str[index] = static_cast<char>(33 + (rand() % 90));
+                    bsodText.setString(str);
+                }
+            }
+        }
+        if (elapsed > bsodDuration) {
+            isNextBootCorrupted = true;
+            currentState = GameState::BootSequence;
+            bootDuration = 3.0f;
+            stateClock.restart();
+        }
+        return;
     }
 
     if (currentState == GameState::NormalOS) {
@@ -226,6 +300,7 @@ void Game::update() {
     terminal.update();
     installerWizard.update();
     fileExplorer.update();
+    driveRecovery.update();
     glitchManager.update();
 
     if (terminal.isRecoveryComplete()) {
@@ -274,6 +349,7 @@ void Game::update() {
     
     if (installerWizard.getIsFinalized() && !hasRecalculatedPerformance) {
         recalculateSystemPerformance();
+        desktop.createIcon("Drive Recovery", "drive_recovery");
         hasRecalculatedPerformance = true;
     }
 }
@@ -285,6 +361,14 @@ void Game::render() {
         window.draw(biosText);
         window.draw(bootProgressBarBackground);
         window.draw(bootProgressBar);
+        glitchManager.applyEffect(window);
+        window.display();
+        return;
+    }
+
+    if (currentState == GameState::BSOD) {
+        window.draw(bsodBg);
+        window.draw(bsodText);
         glitchManager.applyEffect(window);
         window.display();
         return;

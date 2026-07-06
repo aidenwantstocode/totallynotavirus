@@ -236,14 +236,16 @@ void Game::processEvents() {
                     "1. Fix terminal installation errors.\n"
                     "2. Run the Drive Recovery Tool.\n"
                     "3. DO NOT look at the basement drive light.");
+                notepad.setIsOpen(true);
                 forcedFocusWindow = &notepad;
             }
-            else if (clickedApp == "txt_log") {
+            else if (clickedApp == "txt_log" || clickedApp == "file_system_log.txt") {
                 notepad.openFile("system_log.txt", 
                     "FATAL ERROR: Removable Drive (D:) corrupted.\n"
                     "Unidentified logic injection detected in flash device.\n\n"
                     "To initiate manual recovery, locate the backup manual in:\n"
                     "C:\\sys\\drivers");
+                notepad.setIsOpen(true);
                 forcedFocusWindow = &notepad;
             }
             else if (clickedApp == "cmd") {

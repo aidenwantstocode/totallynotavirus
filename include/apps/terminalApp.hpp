@@ -11,6 +11,7 @@ private:
     sf::Text terminalText;
     std::string commandHistory;
     std::string currentInput;
+    sf::RectangleShape contentPane;
 
     float delayMultiplier = 1.0f;
     bool isProcessing = false;

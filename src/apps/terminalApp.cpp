@@ -4,7 +4,7 @@
 
 TerminalApp::TerminalApp() : VirtualWindow("Command Prompt", 500, 350) {
     isOpen = false;
-    windowFrame.setFillColor(sf::Color(0, 0, 0));
+    windowFrame.setFillColor(sf::Color(240, 240, 240));
 
     if (!font.loadFromFile("c:/WINDOWS/Fonts/CONSOLA.TTF")) {
         std::cerr << "[ERROR] TerminalApp FAILED TO LOAD FONT\n";
@@ -14,7 +14,12 @@ TerminalApp::TerminalApp() : VirtualWindow("Command Prompt", 500, 350) {
     terminalText.setCharacterSize(14);
     terminalText.setFillColor(sf::Color(200, 200, 200));
     terminalText.setLineSpacing(1.2f);
-    
+
+    contentPane.setSize(sf::Vector2f(480.f, 300.f));
+    contentPane.setFillColor(sf::Color(0, 0, 0));
+    contentPane.setOutlineThickness(1.f);
+    contentPane.setOutlineColor(sf::Color(128, 128, 128));
+
     commandHistory = "Amity Operating System [build 13a94]\n(c) Marrow Computers 1994. All rights reserved.\n\nC:\\> ";
     terminalText.setString(commandHistory);
 }
@@ -118,7 +123,9 @@ void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& wi
 void TerminalApp::update() {
     VirtualWindow::update();
     if (isOpen) {
-        terminalText.setPosition(windowFrame.getPosition().x + 12, windowFrame.getPosition().y + 40);
+        sf::Vector2f winPos = windowFrame.getPosition();
+        contentPane.setPosition(winPos.x + 10.f, winPos.y + 40.f);
+        terminalText.setPosition(winPos.x + 15.f, winPos.y + 45.f);
     }
     if (isProcessing) {
         if (processingClock.getElapsedTime().asSeconds() >= requiredProcessingTime) {
@@ -170,8 +177,55 @@ void TerminalApp::draw(sf::RenderWindow& window) {
     VirtualWindow::draw(window);
     if (getIsOpening()) return;
     if (isOpen) {
-        terminalText.setString(wrapText(commandHistory + currentInput, 45));
+        window.draw(contentPane);
+
+        std::string wrapped = wrapText(commandHistory + currentInput, 52);
+        
+        // Count lines
+        std::vector<std::string> lines;
+        std::string cur = "";
+        for (char c : wrapped) {
+            if (c == '\n') {
+                lines.push_back(cur);
+                cur = "";
+            } else {
+                cur += c;
+            }
+        }
+        lines.push_back(cur);
+
+        // Max lines we can fit is 15
+        size_t maxLines = 15;
+        std::string displayedText = "";
+        size_t startIndex = 0;
+        if (lines.size() > maxLines) {
+            startIndex = lines.size() - maxLines;
+        }
+        for (size_t i = startIndex; i < lines.size(); ++i) {
+            displayedText += lines[i] + "\n";
+        }
+
+        terminalText.setString(displayedText);
         window.draw(terminalText);
+
+        // Draw scrollbar if text history overflows contentPane
+        if (lines.size() > maxLines) {
+            sf::Vector2f cpPos = contentPane.getPosition();
+            sf::Vector2f cpSize = contentPane.getSize();
+
+            // Scrollbar track
+            sf::RectangleShape track(sf::Vector2f(12.f, cpSize.y - 4.f));
+            track.setPosition(cpPos.x + cpSize.x - 14.f, cpPos.y + 2.f);
+            track.setFillColor(sf::Color(100, 100, 100));
+            window.draw(track);
+
+            // Scrollbar slider handle
+            float handleHeight = std::max(20.f, (cpSize.y - 4.f) * (static_cast<float>(maxLines) / lines.size()));
+            sf::RectangleShape handle(sf::Vector2f(10.f, handleHeight));
+            handle.setPosition(cpPos.x + cpSize.x - 13.f, cpPos.y + cpSize.y - 2.f - handleHeight);
+            handle.setFillColor(sf::Color(180, 180, 180));
+            window.draw(handle);
+        }
     }
 }
 

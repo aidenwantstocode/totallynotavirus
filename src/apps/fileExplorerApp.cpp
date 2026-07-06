@@ -551,6 +551,38 @@ void FileExplorerApp::draw(sf::RenderWindow& window) {
             }
         }
 
+        float itemWidth = 45.f;
+        float itemHeight = 45.f;
+        float paddingX = 55.f;
+        float paddingY = 35.f;
+        int itemsPerRow = std::max(1, static_cast<int>((contentPane.getSize().x - paddingX) / (itemWidth + paddingX)));
+
+        int rowCount = (itemBackgrounds.size() + itemsPerRow - 1) / std::max(1, itemsPerRow);
+        float totalHeight = 40.f + rowCount * (itemHeight + paddingY);
+        float viewportHeight = contentPane.getSize().y - 40.f;
+
+        if (totalHeight > viewportHeight) {
+            sf::Vector2f cpPos = contentPane.getPosition();
+            sf::Vector2f cpSize = contentPane.getSize();
+
+            sf::RectangleShape track(sf::Vector2f(12.f, cpSize.y - 4.f));
+            track.setPosition(cpPos.x + cpSize.x - 14.f, cpPos.y + 2.f);
+            track.setFillColor(sf::Color(220, 220, 220));
+            track.setOutlineThickness(1.f);
+            track.setOutlineColor(sf::Color(180, 180, 180));
+            window.draw(track);
+
+            float usableHeight = cpSize.y - 4.f;
+            float handleHeight = std::max(25.f, usableHeight * (viewportHeight / totalHeight));
+            float maxScroll = totalHeight - viewportHeight;
+            float scrollPct = std::min(1.f, std::max(0.f, std::abs(scrollOffsetY) / maxScroll));
+            
+            sf::RectangleShape handle(sf::Vector2f(10.f, handleHeight));
+            handle.setPosition(cpPos.x + cpSize.x - 13.f, cpPos.y + 2.f + scrollPct * (usableHeight - handleHeight));
+            handle.setFillColor(sf::Color(160, 160, 160));
+            window.draw(handle);
+        }
+
         if (isUnsupportedErrorOpen) {
             sf::Vector2f center = windowFrame.getPosition() + sf::Vector2f(110.f, 130.f);
             errorBg.setPosition(center);

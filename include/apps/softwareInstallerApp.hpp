@@ -42,6 +42,19 @@ private:
     sf::Text errorCloseText;
     void initErrorPopup();
 
+    bool isInstalling = false;
+    float installProgress = 0.f;
+    sf::Clock installClock;
+
+    sf::RectangleShape installBg;
+    sf::RectangleShape installTitleBar;
+    sf::RectangleShape installProgressBg;
+    sf::RectangleShape installProgressBar;
+    sf::Text installTitleText;
+    sf::Text installStatusText;
+    sf::Text installPercentText;
+    void initInstallPopup();
+
 public:
     SoftwareInstallerApp();
     bool getIsErrorOpen() const { return isErrorOpen; }

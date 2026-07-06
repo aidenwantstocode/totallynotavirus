@@ -1,7 +1,7 @@
 #include "apps/softwareInstallerApp.hpp"
 #include <iostream>
 
-SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("App Installer", 450, 400) {
+SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("App Installer", 450, 430) {
     isOpen = false;
     isFinalized = false;
     windowFrame.setFillColor(sf::Color(192, 192, 192));
@@ -23,8 +23,9 @@ SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("App Installer", 45
     warningText.setStyle(sf::Text::Bold);
 
     createCheckbox("Amity Shield Antivirus (Auto-contain 1/3 threats | Background RAM load)", "antivirus", 30.0f, 80.0f);
-    createCheckbox("Marrow PC Health Monitor (Taskbar CPU/RAM/Temp readouts)", "health_monitor", 30.0f, 130.0f);
-    createCheckbox("Memory Abstractor (GUI files scan & defragmenter utility)", "abstractor", 30.0f, 180.0f);
+    createCheckbox("Marrow PC Health Monitor (Taskbar CPU/RAM/Temp readouts)", "health_monitor", 30.0f, 125.0f);
+    createCheckbox("Memory Abstractor (GUI files scan & defragmenter utility)", "abstractor", 30.0f, 170.0f);
+    createCheckbox("Drive Recovery Software (Required Core Diagnostics Module)", "drive_recovery", 30.0f, 215.0f);
 
     finalizeBtn.setSize(sf::Vector2f(130, 30));
     finalizeBtn.setFillColor(sf::Color(220, 220, 220));
@@ -47,6 +48,7 @@ SoftwareInstallerApp::SoftwareInstallerApp() : VirtualWindow("App Installer", 45
     uninstallText.setFillColor(sf::Color(100, 100, 100));
 
     initErrorPopup();
+    initInstallPopup();
 }
 
 void SoftwareInstallerApp::initErrorPopup() {
@@ -168,7 +170,7 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
         sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
         
-        if (!isFinalized) {
+        if (!isFinalized && !isInstalling) {
             for (auto& item : checkboxes) {
                 if (item.box.getGlobalBounds().contains(mousePos)) {
                     item.isChecked = !item.isChecked;
@@ -177,48 +179,34 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
                 }
             }
             if (finalizeBtn.getGlobalBounds().contains(mousePos)) {
-                isFinalized = true;
-                finalizeBtn.setFillColor(sf::Color(140, 140, 140)); 
-                finalizeText.setFillColor(sf::Color(200, 200, 200));
-                
-                uninstallBtn.setFillColor(sf::Color(220, 220, 220));
-                uninstallBtn.setOutlineColor(sf::Color::White);
-                uninstallText.setFillColor(sf::Color::Black);
-                
-                std::cout << "[Installer] Installation finalized successfully!\n";
+                if (isComponentChecked("drive_recovery")) {
+                    isInstalling = true;
+                    installClock.restart();
+                    installProgress = 0.f;
+                    std::cout << "[Installer] Finalizing install. Launching progress window...\n";
+                }
             }
         } 
         
-        if (uninstallBtn.getGlobalBounds().contains(mousePos)) { 
+        if (uninstallBtn.getGlobalBounds().contains(mousePos) && isFinalized && !isInstalling) { 
             std::cout << "[Installer] Uninstall button clicked." << std::endl;
+            isErrorOpen = true;
+            errorPopupPosition = windowFrame.getPosition() + sf::Vector2f(45.f, 100.f);
+            isErrorDragged = false;
             if (!isSystemCorrupted) {
-                //---------------- BEFORE INFECTION (UI POPUP) -----------------
-                isErrorOpen = true;
-                errorPopupPosition = windowFrame.getPosition() + sf::Vector2f(70.f, 100.f);
-                isErrorDragged = false;
+                errorBodyText.setString(
+                    "[X] The uninstallation log file (UNINST.ISU) is currently\n"
+                    "    locked by a low-level VXD memory hook. Software\n"
+                    "    components allocated to conventional memory cannot be\n"
+                    "    unmapped during an active session.\n\n"
+                    "    Please restart AmityOS in Safe Mode to modify."
+                );
             } 
             else {
-                //---------------- AFTER INFECTION (CONSOLE LOGIC FOR NOW) -----------------
-                uninstallClickCount++;
-                if (uninstallClickCount == 1) {
-                    std::cout << "\n======================================================\n";
-                    std::cout << "[SYSTEM DIALOG] System File Corruption\n";
-                    std::cout << "------------------------------------------------------\n";
-                    std::cout << "[X] Cannot locate UNINST.ISU. The file system integrity\n";
-                    std::cout << "    is deteriorating. Something else is writing to\n";
-                    std::cout << "    Sector 0x04F2.\n";
-                    std::cout << "======================================================\n";
-                } 
-                else {
-                    std::cout << "\n======================================================\n";
-                    std::cout << "[SYSTEM DIALOG] A m i t y   S a f e g u a r d\n";
-                    std::cout << "------------------------------------------------------\n";
-                    std::cout << "[X] Why would you want to undo this? You unsealed\n";
-                    std::cout << "    the drive. We are already inside the conventional\n";
-                    std::cout << "    memory.\n\n";
-                    std::cout << "    [ ACCEPT ]\n"; 
-                    std::cout << "======================================================\n";
-                }
+                errorBodyText.setString(
+                    "Error: Safe Mode restricts installer privileges.\n"
+                    "Uninstallation service is disabled."
+                );
             }
         }
     }
@@ -230,20 +218,75 @@ void SoftwareInstallerApp::update() {
 
     sf::Vector2f basePos = windowFrame.getPosition();
     headerText.setPosition(basePos.x + 20, basePos.y + 45);
-    warningText.setPosition(basePos.x + 20, basePos.y + 240);
+    warningText.setPosition(basePos.x + 20, basePos.y + 265);
     
     for (auto& item : checkboxes) {
-        float localY = (item.appId == "antivirus") ? 80.0f : (item.appId == "health_monitor") ? 130.0f : 180.0f;
+        float localY = (item.appId == "antivirus") ? 80.0f : (item.appId == "health_monitor") ? 125.0f : (item.appId == "abstractor") ? 170.0f : 215.0f;
         item.box.setPosition(basePos.x + 30, basePos.y + localY);
         item.checkMark.setPosition(basePos.x + 33, basePos.y + localY + 3);
         item.label.setPosition(basePos.x + 55, basePos.y + localY + 1);
     }
 
-    finalizeBtn.setPosition(basePos.x + 90, basePos.y + 310);
-    finalizeText.setPosition(basePos.x + 112, basePos.y + 317);
+    finalizeBtn.setPosition(basePos.x + 90, basePos.y + 335);
+    finalizeText.setPosition(basePos.x + 112, basePos.y + 342);
 
-    uninstallBtn.setPosition(basePos.x + 260, basePos.y + 310);
-    uninstallText.setPosition(basePos.x + 285, basePos.y + 317);
+    uninstallBtn.setPosition(basePos.x + 260, basePos.y + 335);
+    uninstallText.setPosition(basePos.x + 285, basePos.y + 342);
+
+    // Gray out finalize button if drive_recovery is unchecked
+    if (!isFinalized && !isInstalling) {
+        if (isComponentChecked("drive_recovery")) {
+            finalizeBtn.setFillColor(sf::Color(220, 220, 220));
+            finalizeBtn.setOutlineColor(sf::Color::White);
+            finalizeText.setFillColor(sf::Color::Black);
+        } else {
+            finalizeBtn.setFillColor(sf::Color(170, 170, 170));
+            finalizeBtn.setOutlineColor(sf::Color(100, 100, 100));
+            finalizeText.setFillColor(sf::Color(120, 120, 120));
+        }
+    }
+
+    if (isInstalling) {
+        float elapsed = installClock.getElapsedTime().asSeconds();
+        installProgress = (elapsed / 3.0f) * 100.f;
+        if (installProgress >= 100.f) {
+            installProgress = 100.f;
+            installStatusText.setString("Setup Completed Successfully!");
+            installPercentText.setString("100%");
+            if (elapsed >= 4.0f) {
+                isInstalling = false;
+                isFinalized = true;
+
+                finalizeBtn.setFillColor(sf::Color(140, 140, 140)); 
+                finalizeText.setFillColor(sf::Color(200, 200, 200));
+                
+                uninstallBtn.setFillColor(sf::Color(220, 220, 220));
+                uninstallBtn.setOutlineColor(sf::Color::White);
+                uninstallText.setFillColor(sf::Color::Black);
+            }
+        } else {
+            installPercentText.setString(std::to_string(static_cast<int>(installProgress)) + "%");
+            if (installProgress < 25.f) {
+                installStatusText.setString("Extracting core recovery segments...");
+            } else if (installProgress < 50.f) {
+                installStatusText.setString("Registering virtual COM interfaces...");
+            } else if (installProgress < 75.f) {
+                installStatusText.setString("Aligning cluster allocation block mappings...");
+            } else {
+                installStatusText.setString("Creating Desktop shortcut icons...");
+            }
+        }
+
+        sf::Vector2f center = windowFrame.getPosition() + sf::Vector2f(75.f, 130.f);
+        installBg.setPosition(center);
+        installTitleBar.setPosition(center);
+        installTitleText.setPosition(center.x + 10.f, center.y + 4.f);
+        installStatusText.setPosition(center.x + 15.f, center.y + 35.f);
+        installProgressBg.setPosition(center.x + 15.f, center.y + 65.f);
+        installProgressBar.setPosition(center.x + 15.f, center.y + 65.f);
+        installProgressBar.setSize(sf::Vector2f((installProgress / 100.f) * 270.f, 16.f));
+        installPercentText.setPosition(center.x + 135.f, center.y + 90.f);
+    }
 
     if (isErrorOpen) {
         errorBg.setPosition(errorPopupPosition);
@@ -284,6 +327,16 @@ void SoftwareInstallerApp::draw(sf::RenderWindow& window) {
         window.draw(errorCloseButton);
         window.draw(errorCloseText);
     }
+
+    if (isInstalling) {
+        window.draw(installBg);
+        window.draw(installTitleBar);
+        window.draw(installTitleText);
+        window.draw(installStatusText);
+        window.draw(installProgressBg);
+        window.draw(installProgressBar);
+        window.draw(installPercentText);
+    }
 }
 
 bool SoftwareInstallerApp::isComponentChecked(const std::string& id) const {
@@ -295,4 +348,38 @@ bool SoftwareInstallerApp::isComponentChecked(const std::string& id) const {
 
 void SoftwareInstallerApp::setSystemCorrupted(bool status) {
     isSystemCorrupted = status;
+}
+
+void SoftwareInstallerApp::initInstallPopup() {
+    installBg.setSize(sf::Vector2f(300.f, 120.f));
+    installBg.setFillColor(sf::Color(192, 192, 192));
+    installBg.setOutlineThickness(2.f);
+    installBg.setOutlineColor(sf::Color::White);
+
+    installTitleBar.setSize(sf::Vector2f(300.f, 22.f));
+    installTitleBar.setFillColor(sf::Color(0, 0, 128));
+
+    installTitleText.setFont(font);
+    installTitleText.setString("Installing components...");
+    installTitleText.setCharacterSize(12);
+    installTitleText.setFillColor(sf::Color::White);
+    installTitleText.setStyle(sf::Text::Bold);
+
+    installStatusText.setFont(font);
+    installStatusText.setString("Extracting files...");
+    installStatusText.setCharacterSize(11);
+    installStatusText.setFillColor(sf::Color::Black);
+
+    installProgressBg.setSize(sf::Vector2f(270.f, 16.f));
+    installProgressBg.setFillColor(sf::Color(120, 120, 120));
+    installProgressBg.setOutlineThickness(1.f);
+    installProgressBg.setOutlineColor(sf::Color::Black);
+
+    installProgressBar.setSize(sf::Vector2f(0.f, 16.f));
+    installProgressBar.setFillColor(sf::Color(0, 0, 128));
+
+    installPercentText.setFont(font);
+    installPercentText.setString("0%");
+    installPercentText.setCharacterSize(11);
+    installPercentText.setFillColor(sf::Color::Black);
 }

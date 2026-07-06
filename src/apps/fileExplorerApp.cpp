@@ -213,6 +213,8 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
             sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
             if (errorOkButton.getGlobalBounds().contains(mousePos)) {
                 isUnsupportedErrorOpen = false;
+                errorTitleText.setString("SYSTEM WARN");
+                errorBodyText.setString("Cannot open file:\nFormat is not supported by OS.");
                 std::cout << "[FileExplorer] Closed unsupported warning dialog.\n";
             }
         }
@@ -273,6 +275,12 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
         // Sidebar shortcuts
         for (const auto& shortcut : sidebarShortcuts) {
             if (shortcut.isVisible && shortcut.rect.getGlobalBounds().contains(mousePos)) {
+                if (shortcut.path == "C:\\Desktop") {
+                    isUnsupportedErrorOpen = true;
+                    errorTitleText.setString("Access Denied");
+                    errorBodyText.setString("Error: The Desktop folder is protected by the operating system\nkernel. Files on the Desktop must be accessed from the\nworkspace screen directly.");
+                    return;
+                }
                 currentPath = shortcut.path;
                 scrollOffsetY = 0.f;
                 refreshVisibleItems();
@@ -295,7 +303,9 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
 
         // Delete button
         if (deleteButton.getGlobalBounds().contains(mousePos)) {
-            deleteSelectedFile();
+            isUnsupportedErrorOpen = true;
+            errorTitleText.setString("Deletion Prohibited");
+            errorBodyText.setString("Error: File system integrity lock.\nDeletion of system components is prohibited\nunder the active session.");
             return;
         }
 
@@ -314,6 +324,12 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
                 itemClicked = true;
                 if (selectedIndex == i && doubleClickTimer.getElapsedTime().asMilliseconds() < 300) {
                     if (visibleItems[i].isFolder) {
+                        if (visibleItems[i].path == "C:\\Desktop") {
+                            isUnsupportedErrorOpen = true;
+                            errorTitleText.setString("Access Denied");
+                            errorBodyText.setString("Error: The Desktop folder is protected by the operating system\nkernel. Files on the Desktop must be accessed from the\nworkspace screen directly.");
+                            return;
+                        }
                         scrollOffsetY = 0.f;
                         enterFolder(i);
                     } else {

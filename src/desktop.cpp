@@ -106,8 +106,11 @@ void Desktop::createIcon(const std::string& title, const std::string& id) {
     icon.appId = id;
     icon.slotIndex = slot;
 
-    float x = 40.0f;
-    float y = 40.0f + slot * 90.0f;
+    int row = slot % 7;
+    int col = slot / 7;
+
+    float x = 40.0f + col * 95.0f;
+    float y = 40.0f + row * 90.0f;
 
     icon.body.setSize(sf::Vector2f(40, 40));
     icon.body.setPosition(x, y);

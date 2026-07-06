@@ -369,16 +369,21 @@ void Game::update() {
     if (dt > 0.1f) dt = 0.1f;
 
     if (currentState == GameState::NormalOS || currentState == GameState::ActiveOS || currentState == GameState::CorruptedOS) {
-        float activeRam = 15.f;
-        if (terminal.getIsOpen()) activeRam += 5.f;
-        if (fileExplorer.getIsOpen()) activeRam += 5.f;
-        if (notepad.getIsOpen()) activeRam += 5.f;
-        if (driveRecovery.getIsOpen()) activeRam += 5.f;
-        if (settingsApp.getIsOpen()) activeRam += 5.f;
-        if (antivirusApp.getIsOpen()) activeRam += 5.f;
-        if (defragApp.getIsOpen()) activeRam += 5.f;
+        float activeRam = 10.f; // Baseline conventional memory
+        if (terminal.getIsOpen()) activeRam += 12.f;
+        if (fileExplorer.getIsOpen()) activeRam += 12.f;
+        if (notepad.getIsOpen()) activeRam += 12.f;
+        if (driveRecovery.getIsOpen()) activeRam += 12.f;
+        if (settingsApp.getIsOpen()) activeRam += 12.f;
+        if (antivirusApp.getIsOpen()) activeRam += 12.f;
+        if (defragApp.getIsOpen()) activeRam += 12.f;
+        if (installerWizard.getIsOpen()) activeRam += 12.f;
 
-        float leakCost = antivirusApp.isMemoryFirewallActive() ? 5.f : 10.f;
+        if (antivirusApp.getIsMasterShieldActive()) {
+            activeRam += 15.f; // Active background task RAM load
+        }
+
+        float leakCost = antivirusApp.isMemoryFirewallActive() ? 4.f : 8.f;
         activeRam += fileExplorer.countCorruptedFiles() * leakCost;
 
         ramUtil = activeRam;
@@ -630,8 +635,9 @@ void Game::update() {
         if (systemLogsSpawnTimer > 0.f) {
             systemLogsSpawnTimer -= dt;
             if (systemLogsSpawnTimer <= 0.f) {
-                fileExplorer.addFileToFolder("C:\\", "system_log.txt", "txt");
-                std::cout << "[OS Kernel] Spawned system_log.txt after mount delay.\n";
+                fileExplorer.addFileToFolder("C:\\Desktop", "system_log.txt", "txt");
+                desktop.createIcon("system_log.txt", "file_system_log.txt");
+                std::cout << "[OS Kernel] Spawned system_log.txt on desktop after mount delay.\n";
             }
         }
 

@@ -107,7 +107,15 @@ private:
         sf::Vector2f velocity;
         bool isClosed = false;
 
-        PopupAlert(sf::Font& font, float x, float y, sf::Vector2f vel) {
+        int type = 0; // 0 = standard, 1 = timebomb, 2 = leaker
+        float timer = 8.f;
+        int clicksNeeded = 5;
+        sf::RectangleShape defuseButton;
+        sf::Text defuseText;
+        float leakTimer = 1.5f;
+
+        PopupAlert(sf::Font& font, float x, float y, sf::Vector2f vel, int t) {
+            type = t;
             velocity = vel;
             frame.setSize(sf::Vector2f(220.f, 130.f));
             frame.setFillColor(sf::Color(192, 192, 192));
@@ -115,7 +123,7 @@ private:
             frame.setOutlineColor(sf::Color::White);
 
             titleBar.setSize(sf::Vector2f(220.f, 20.f));
-            titleBar.setFillColor(sf::Color(128, 0, 0));
+            titleBar.setFillColor(t == 1 ? sf::Color(200, 0, 0) : (t == 2 ? sf::Color(128, 0, 128) : sf::Color(0, 0, 128)));
 
             closeButton.setSize(sf::Vector2f(16.f, 16.f));
             closeButton.setFillColor(sf::Color(192, 192, 192));
@@ -123,13 +131,19 @@ private:
             closeButton.setOutlineColor(sf::Color::Black);
 
             titleText.setFont(font);
-            titleText.setString("ALERT");
-            titleText.setCharacterSize(11);
+            titleText.setString(t == 1 ? "TIME BOMB DETECTED!" : (t == 2 ? "VXD MEMORY LEAK!" : "ALERT"));
+            titleText.setCharacterSize(10);
             titleText.setFillColor(sf::Color::White);
             titleText.setStyle(sf::Text::Bold);
 
             bodyText.setFont(font);
-            bodyText.setString("WARNING!\nConventional memory overflow.\nClose applications.");
+            if (t == 1) {
+                bodyText.setString("System payload executing...\nBOOM in 8.0 seconds!\nMash DEFUSE!");
+            } else if (t == 2) {
+                bodyText.setString("Conventional heap leakage active.\nLeaking cluster data to desktop.\nClick [X] to isolate.");
+            } else {
+                bodyText.setString("WARNING!\nConventional memory overflow.\nClose applications.");
+            }
             bodyText.setCharacterSize(10);
             bodyText.setFillColor(sf::Color::Black);
 
@@ -138,6 +152,19 @@ private:
             closeText.setCharacterSize(10);
             closeText.setFillColor(sf::Color::Black);
             closeText.setStyle(sf::Text::Bold);
+
+            if (t == 1) {
+                defuseButton.setSize(sf::Vector2f(80.f, 22.f));
+                defuseButton.setFillColor(sf::Color(220, 220, 220));
+                defuseButton.setOutlineThickness(1.f);
+                defuseButton.setOutlineColor(sf::Color::Black);
+
+                defuseText.setFont(font);
+                defuseText.setString("DEFUSE (5)");
+                defuseText.setCharacterSize(10);
+                defuseText.setFillColor(sf::Color::Black);
+                defuseText.setStyle(sf::Text::Bold);
+            }
 
             setPosition(x, y);
         }
@@ -149,6 +176,10 @@ private:
             titleText.setPosition(x + 5.f, y + 3.f);
             bodyText.setPosition(x + 10.f, y + 30.f);
             closeText.setPosition(x + frame.getSize().x - 15.f, y + 4.f);
+            if (type == 1) {
+                defuseButton.setPosition(x + 70.f, y + 95.f);
+                defuseText.setPosition(x + 85.f, y + 99.f);
+            }
         }
     };
 
@@ -160,6 +191,7 @@ private:
     void initWindow();
     void toggleFullscreen();
     void updateWindowView(unsigned int windowWidth, unsigned int windowHeight);
+    void closeAllWindows();
 
 public:
     Game();

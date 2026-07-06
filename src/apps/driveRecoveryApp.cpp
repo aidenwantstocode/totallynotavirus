@@ -85,7 +85,7 @@ void DriveRecoveryApp::enterCorruptedMode() {
     currentWave = 0;
     currentSector = 1;
     sectorLocked = false;
-    nextCheckpoint = 20.f;
+    nextCheckpoint = 10.f;
     waveActive = false;
     logLines.clear();
     addLog("[SYSTEM RECOVERY STATE]");
@@ -104,14 +104,22 @@ void DriveRecoveryApp::triggerNextWave(int waveNum, float checkpoint) {
         addLog("[ERROR] Registry mapping mismatch in Sector 2.");
         addLog("[HELP] Synchronize nodes. Command: 'regsync'.");
     } else if (currentSector == 3) {
-        addLog("[ERROR] FAT32 cluster mismatch in Sector 3.");
-        addLog("[HELP] Find key in memories, unlock FAT32.");
+        addLog("[INFO] Sector 3 scan initiated...");
     } else if (currentSector == 4) {
-        addLog("[ERROR] Heap fragmentation error in Sector 4.");
-        addLog("[HELP] Run Memory Abstractor scan to optimize.");
+        addLog("[ERROR] FAT32 cluster mismatch in Sector 4.");
+        addLog("[HELP] Find key in memories, unlock FAT32.");
     } else if (currentSector == 5) {
+        addLog("[INFO] Sector 5 scan initiated...");
+    } else if (currentSector == 6) {
+        addLog("[ERROR] Heap fragmentation error in Sector 6.");
+        addLog("[HELP] Run Memory Abstractor scan to optimize.");
+    } else if (currentSector == 7) {
+        addLog("[INFO] Sector 7 scan initiated...");
+    } else if (currentSector == 8) {
         addLog("[ERROR] Conventional memory signature missing.");
         addLog("[HELP] Input Safe Mode key from system logs.");
+    } else {
+        addLog("[INFO] Sector " + std::to_string(currentSector) + " scan initiated...");
     }
 }
 

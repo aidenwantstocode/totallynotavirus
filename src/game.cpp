@@ -207,12 +207,27 @@ void Game::processEvents() {
             bool popupClicked = false;
             auto it = activePopups.begin();
             while (it != activePopups.end()) {
-                sf::FloatRect bounds(it->closeButton.getPosition().x, it->closeButton.getPosition().y, it->closeButton.getSize().x, it->closeButton.getSize().y);
-                if (bounds.contains(mousePos)) {
-                    it = activePopups.erase(it);
-                    popupClicked = true;
-                    std::cout << "[OS Engine] Closed popup alert.\n";
-                    break;
+                if (it->type == 1) {
+                    sf::FloatRect defuseBounds = it->defuseButton.getGlobalBounds();
+                    if (defuseBounds.contains(mousePos)) {
+                        it->clicksNeeded--;
+                        if (it->clicksNeeded <= 0) {
+                            it = activePopups.erase(it);
+                            popupClicked = true;
+                            std::cout << "[Virus Warning] Defused Time Bomb popup!\n";
+                        } else {
+                            it->defuseText.setString("DEFUSE (" + std::to_string(it->clicksNeeded) + ")");
+                        }
+                        break;
+                    }
+                } else {
+                    sf::FloatRect bounds(it->closeButton.getPosition().x, it->closeButton.getPosition().y, it->closeButton.getSize().x, it->closeButton.getSize().y);
+                    if (bounds.contains(mousePos)) {
+                        it = activePopups.erase(it);
+                        popupClicked = true;
+                        std::cout << "[OS Engine] Closed popup alert.\n";
+                        break;
+                    }
                 }
                 ++it;
             }
@@ -535,53 +550,83 @@ void Game::update() {
             fileExplorer.addFileToFolder("C:\\sys", "sect1.txt", "txt");
         }
         if (terminal.checkAndClearFat32()) {
-            driveRecovery.unlockSector(3);
+            driveRecovery.unlockSector(4);
             // Spawn sect2.txt so player gets confirmation
             fileExplorer.addFileToFolder("C:\\sys", "sect2.txt", "txt");
         }
-        if (driveRecovery.getCurrentSector() == 4 && driveRecovery.isSectorLocked() && defragApp.checkAndClearCleanRequest()) {
-            driveRecovery.unlockSector(4);
+        if (driveRecovery.getCurrentSector() == 6 && driveRecovery.isSectorLocked() && defragApp.checkAndClearCleanRequest()) {
+            driveRecovery.unlockSector(6);
             // Allow cleaning memory leaks as normal
             std::cout << "[OS Kernel] Memory Abstractor optimized heap. Cleaning memory leaks...\n";
             fileExplorer.clearCorruptedFiles();
         }
         if (terminal.checkAndClearSafe()) {
-            driveRecovery.unlockSector(5);
+            driveRecovery.unlockSector(8);
         }
 
         // Sector Checkpoints & Wave triggers
         if (driveRecovery.isWaveActive() && currentWave == 0) {
             float progress = driveRecovery.getProgress();
-            if (progress >= 20.f && progress < 22.f) {
+            if (progress >= 10.f && progress < 12.f) {
                 currentWave = 1;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 1 started!\n";
-            } else if (progress >= 40.f && progress < 42.f) {
+            } else if (progress >= 20.f && progress < 22.f) {
                 currentWave = 2;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 2 started!\n";
-            } else if (progress >= 60.f && progress < 62.f) {
+            } else if (progress >= 30.f && progress < 32.f) {
                 currentWave = 3;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 3 started!\n";
-            } else if (progress >= 80.f && progress < 82.f) {
+            } else if (progress >= 40.f && progress < 42.f) {
                 currentWave = 4;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
                 std::cout << "[Virus Wave] Wave 4 started!\n";
-            } else if (progress >= 100.f) {
+            } else if (progress >= 50.f && progress < 52.f) {
                 currentWave = 5;
                 waveTimer = 25.f;
                 popupSpawnTimer = 0.5f;
                 fileSpawnTimer = 1.0f;
-                std::cout << "[Virus Wave] Final Wave 5 started!\n";
+                std::cout << "[Virus Wave] Wave 5 started!\n";
+            } else if (progress >= 60.f && progress < 62.f) {
+                currentWave = 6;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 6 started!\n";
+            } else if (progress >= 70.f && progress < 72.f) {
+                currentWave = 7;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 7 started!\n";
+            } else if (progress >= 80.f && progress < 82.f) {
+                currentWave = 8;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 8 started!\n";
+            } else if (progress >= 90.f && progress < 92.f) {
+                currentWave = 9;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Wave 9 started!\n";
+            } else if (progress >= 99.f) {
+                currentWave = 10;
+                waveTimer = 25.f;
+                popupSpawnTimer = 0.5f;
+                fileSpawnTimer = 1.0f;
+                std::cout << "[Virus Wave] Final Wave 10 started!\n";
             }
         }
 
@@ -590,11 +635,7 @@ void Game::update() {
             popupSpawnTimer -= dt;
             fileSpawnTimer -= dt;
 
-            float popupInterval = 3.5f;
-            if (currentWave == 2) popupInterval = 2.0f;
-            if (currentWave == 3) popupInterval = 1.5f;
-            if (currentWave == 4) popupInterval = 1.0f;
-            if (currentWave == 5) popupInterval = 0.8f;
+            float popupInterval = std::max(0.6f, 3.5f - (currentWave - 1) * 0.32f);
 
             if (antivirusApp.isActiveMonitorActive()) {
                 popupInterval *= 2.0f; 
@@ -605,11 +646,7 @@ void Game::update() {
                 popupSpawnTimer = popupInterval;
             }
 
-            float fileInterval = 4.5f;
-            if (currentWave == 2) fileInterval = 3.0f;
-            if (currentWave == 3) fileInterval = 2.0f;
-            if (currentWave == 4) fileInterval = 1.5f;
-            if (currentWave == 5) fileInterval = 1.0f;
+            float fileInterval = std::max(0.4f, 4.5f - (currentWave - 1) * 0.45f);
 
             if (fileSpawnTimer <= 0.f) {
                 if (antivirusApp.isFileShieldActive()) {
@@ -632,16 +669,31 @@ void Game::update() {
                 activePopups.clear();
 
                 if (currentWave == 1) {
-                    driveRecovery.triggerNextWave(1, 40.f);
+                    driveRecovery.triggerNextWave(1, 20.f);
                 } else if (currentWave == 2) {
-                    driveRecovery.triggerNextWave(2, 60.f);
+                    driveRecovery.triggerNextWave(2, 30.f);
+                    driveRecovery.unlockSector(3);
                 } else if (currentWave == 3) {
-                    driveRecovery.triggerNextWave(3, 80.f);
+                    driveRecovery.triggerNextWave(3, 40.f);
                 } else if (currentWave == 4) {
-                    driveRecovery.triggerNextWave(4, 100.f);
+                    driveRecovery.triggerNextWave(4, 50.f);
+                    driveRecovery.unlockSector(5);
                 } else if (currentWave == 5) {
+                    driveRecovery.triggerNextWave(5, 60.f);
+                } else if (currentWave == 6) {
+                    driveRecovery.triggerNextWave(6, 70.f);
+                    driveRecovery.unlockSector(7);
+                } else if (currentWave == 7) {
+                    driveRecovery.triggerNextWave(7, 80.f);
+                } else if (currentWave == 8) {
+                    driveRecovery.triggerNextWave(8, 90.f);
+                    driveRecovery.unlockSector(9);
+                } else if (currentWave == 9) {
+                    driveRecovery.triggerNextWave(9, 99.5f);
+                    driveRecovery.unlockSector(10);
+                } else if (currentWave == 10) {
                     driveRecovery.setWaveActive(false);
-                    std::cout << "[OS Engine] Sector 5 scanned! Diagnostics complete!\n";
+                    std::cout << "[OS Engine] Sector 10 scanned! Diagnostics complete!\n";
                 }
                 currentWave = 0;
             }
@@ -873,10 +925,33 @@ void Game::updateWindowView(unsigned int windowWidth, unsigned int windowHeight)
 
 void Game::spawnPopup() {
     bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
-    if (antivirusActive && antivirusApp.isActiveMonitorActive()) {
-        std::cout << "[Antivirus] Passively blocked a virus popup spawn attempt!\n";
-        antivirusApp.logBlockedThreat("Popup Alert Threat (Active Monitor)");
-        return;
+    
+    // Choose type based on wave
+    int selectedType = 0;
+    int roll = rand() % 100;
+    if (currentWave <= 3) {
+        if (roll < 40) selectedType = 2; // 40% leakers
+    } else if (currentWave <= 7) {
+        if (roll < 40) selectedType = 2; // 40% leakers
+        else if (roll < 75) selectedType = 1; // 35% time-bombs
+    } else {
+        if (roll < 45) selectedType = 1; // 45% time-bombs
+        else if (roll < 85) selectedType = 2; // 40% leakers
+        else selectedType = 0;
+    }
+
+    // Shield checks
+    if (antivirusActive) {
+        if (selectedType == 2 && antivirusApp.isMemoryFirewallActive()) {
+            std::cout << "[Antivirus] Passively blocked a memory leaker spawn attempt!\n";
+            antivirusApp.logBlockedThreat("Memory Leaker (Memory Firewall)");
+            return;
+        }
+        if ((selectedType == 0 || selectedType == 1) && antivirusApp.isActiveMonitorActive()) {
+            std::cout << "[Antivirus] Passively blocked a popup/bomb spawn attempt!\n";
+            antivirusApp.logBlockedThreat(selectedType == 1 ? "Time-Bomb (Active Monitor)" : "Popup Alert (Active Monitor)");
+            return;
+        }
     }
 
     float rx = 50.f + static_cast<float>(rand() % 650);
@@ -888,35 +963,72 @@ void Game::spawnPopup() {
         if (abs(vel.x) < 20.f) vel.x = 60.f;
         if (abs(vel.y) < 20.f) vel.y = 60.f;
     }
-    activePopups.push_back(PopupAlert(systemFont, rx, ry, vel));
-    std::cout << "[Virus Wave] Spawned popup alert.\n";
+    activePopups.push_back(PopupAlert(systemFont, rx, ry, vel, selectedType));
+    std::cout << "[Virus Wave] Spawned popup alert type " << selectedType << ".\n";
 }
 
 void Game::updatePopups(float dt) {
-    for (auto& popup : activePopups) {
+    bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
+    
+    auto it = activePopups.begin();
+    while (it != activePopups.end()) {
+        if (it->type == 1) {
+            it->timer -= dt;
+            if (it->timer <= 0.f) {
+                // Boom! BSOD reboot
+                currentState = GameState::BSOD;
+                bsodClock.restart();
+                closeAllWindows();
+                activePopups.clear();
+                std::cout << "[Virus Warning] Time bomb exploded! System BSOD.\n";
+                return;
+            }
+            int sec = static_cast<int>(it->timer);
+            int ms = static_cast<int>((it->timer - sec) * 10.f);
+            if (ms < 0) ms = 0;
+            it->bodyText.setString("System payload executing...\nBOOM in " + std::to_string(sec) + "." + std::to_string(ms) + " seconds!\nMash DEFUSE!");
+        } 
+        else if (it->type == 2) {
+            it->leakTimer -= dt;
+            if (it->leakTimer <= 0.f) {
+                it->leakTimer = 1.5f;
+                // Try spawning desktop leak file
+                if (antivirusActive && antivirusApp.isFileShieldActive()) {
+                    antivirusApp.logBlockedThreat("Desktop Spam File (Filesystem Guard)");
+                    std::cout << "[Antivirus] Filesystem Guard blocked a desktop file spawn!\n";
+                } else {
+                    std::string fileId = "leak_" + std::to_string(rand() % 10000) + ".sys";
+                    fileExplorer.addFileToFolder("C:\\Desktop", fileId, "sysfile");
+                    desktop.createIcon(fileId, fileId);
+                    std::cout << "[Virus Warning] Spammed " << fileId << " to desktop.\n";
+                }
+            }
+        }
+
         if (currentWave >= 2) {
-            sf::Vector2f pos = popup.frame.getPosition();
-            pos += popup.velocity * dt;
+            sf::Vector2f pos = it->frame.getPosition();
+            pos += it->velocity * dt;
 
             // Bounce off screen boundaries
             if (pos.x < 0.f) {
                 pos.x = 0.f;
-                popup.velocity.x = -popup.velocity.x;
+                it->velocity.x = -it->velocity.x;
             }
-            if (pos.x + popup.frame.getSize().x > 1024.f) {
-                pos.x = 1024.f - popup.frame.getSize().x;
-                popup.velocity.x = -popup.velocity.x;
+            if (pos.x + it->frame.getSize().x > 1024.f) {
+                pos.x = 1024.f - it->frame.getSize().x;
+                it->velocity.x = -it->velocity.x;
             }
             if (pos.y < 0.f) {
                 pos.y = 0.f;
-                popup.velocity.y = -popup.velocity.y;
+                it->velocity.y = -it->velocity.y;
             }
-            if (pos.y + popup.frame.getSize().y > 768.f - 40.f) {
-                pos.y = 768.f - 40.f - popup.frame.getSize().y;
-                popup.velocity.y = -popup.velocity.y;
+            if (pos.y + it->frame.getSize().y > 768.f - 40.f) {
+                pos.y = 768.f - 40.f - it->frame.getSize().y;
+                it->velocity.y = -it->velocity.y;
             }
-            popup.setPosition(pos.x, pos.y);
+            it->setPosition(pos.x, pos.y);
         }
+        ++it;
     }
 }
 
@@ -928,5 +1040,20 @@ void Game::drawPopups() {
         window.draw(popup.titleText);
         window.draw(popup.bodyText);
         window.draw(popup.closeText);
+        if (popup.type == 1) {
+            window.draw(popup.defuseButton);
+            window.draw(popup.defuseText);
+        }
     }
+}
+
+void Game::closeAllWindows() {
+    installerWizard.setIsOpen(false);
+    fileExplorer.setIsOpen(false);
+    terminal.setIsOpen(false);
+    notepad.setIsOpen(false);
+    settingsApp.setIsOpen(false);
+    driveRecovery.setIsOpen(false);
+    antivirusApp.setIsOpen(false);
+    defragApp.setIsOpen(false);
 }

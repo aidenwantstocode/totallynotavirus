@@ -188,26 +188,12 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
             }
         } 
         
-        if (uninstallBtn.getGlobalBounds().contains(mousePos) && !isInstalling) { 
-            std::cout << "[Installer] Uninstall button clicked." << std::endl;
-            isErrorOpen = true;
-            errorPopupPosition = windowFrame.getPosition() + sf::Vector2f(45.f, 100.f);
-            isErrorDragged = false;
-            if (!isSystemCorrupted) {
-                errorBodyText.setString(
-                    "[X] The uninstallation log file (UNINST.ISU) is currently\n"
-                    "    locked by a low-level VXD memory hook. Software\n"
-                    "    components allocated to conventional memory cannot be\n"
-                    "    unmapped during an active session.\n\n"
-                    "    Please restart AmityOS in Safe Mode to modify."
-                );
-            } 
-            else {
-                errorBodyText.setString(
-                    "Error: Safe Mode restricts installer privileges.\n"
-                    "Uninstallation service is disabled."
-                );
-            }
+        if (uninstallBtn.getGlobalBounds().contains(mousePos) && isFinalized && !isInstalling && !isUninstalling) { 
+            std::cout << "[Installer] Starting uninstallation attempt...\n";
+            isUninstalling = true;
+            uninstallClock.restart();
+            uninstallProgress = 0.f;
+            isErrorOpen = false;
         }
     }
 }
@@ -288,6 +274,52 @@ void SoftwareInstallerApp::update() {
         installPercentText.setPosition(center.x + 135.f, center.y + 90.f);
     }
 
+    if (isUninstalling) {
+        float elapsed = uninstallClock.getElapsedTime().asSeconds();
+        uninstallProgress = (elapsed / 3.0f) * 100.f;
+        if (uninstallProgress >= 100.f) {
+            uninstallProgress = 100.f;
+            isUninstalling = false;
+            isErrorOpen = true;
+            errorPopupPosition = windowFrame.getPosition() + sf::Vector2f(45.f, 100.f);
+            isErrorDragged = false;
+            
+            if (!isSystemCorrupted) {
+                errorBodyText.setString(
+                    "[X] The uninstallation log file (UNINST.ISU) is currently\n"
+                    "    locked by a low-level VXD memory hook. Software\n"
+                    "    components allocated to conventional memory cannot be\n"
+                    "    unmapped during an active session.\n\n"
+                    "    Please restart AmityOS in Safe Mode to modify."
+                );
+            } else {
+                errorBodyText.setString(
+                    "Error: Safe Mode restricts installer privileges.\n"
+                    "Uninstallation service is disabled."
+                );
+            }
+        } else {
+            installPercentText.setString(std::to_string(static_cast<int>(uninstallProgress)) + "%");
+            if (uninstallProgress < 30.f) {
+                installStatusText.setString("Attempting uninstallation rollbacks...");
+            } else if (uninstallProgress < 60.f) {
+                installStatusText.setString("Stopping running system background modules...");
+            } else {
+                installStatusText.setString("Acquiring lock on UNINST.ISU allocation logs...");
+            }
+        }
+
+        sf::Vector2f center = windowFrame.getPosition() + sf::Vector2f(75.f, 130.f);
+        installBg.setPosition(center);
+        installTitleBar.setPosition(center);
+        installTitleText.setPosition(center.x + 10.f, center.y + 4.f);
+        installStatusText.setPosition(center.x + 15.f, center.y + 35.f);
+        installProgressBg.setPosition(center.x + 15.f, center.y + 65.f);
+        installProgressBar.setPosition(center.x + 15.f, center.y + 65.f);
+        installProgressBar.setSize(sf::Vector2f((uninstallProgress / 100.f) * 270.f, 16.f));
+        installPercentText.setPosition(center.x + 135.f, center.y + 90.f);
+    }
+
     if (isErrorOpen) {
         errorBg.setPosition(errorPopupPosition);
         errorTitleBarBg.setPosition(errorPopupPosition);
@@ -328,7 +360,7 @@ void SoftwareInstallerApp::draw(sf::RenderWindow& window) {
         window.draw(errorCloseText);
     }
 
-    if (isInstalling) {
+    if (isInstalling || isUninstalling) {
         window.draw(installBg);
         window.draw(installTitleBar);
         window.draw(installTitleText);

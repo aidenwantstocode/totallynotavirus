@@ -55,6 +55,10 @@ private:
     sf::Text installPercentText;
     void initInstallPopup();
 
+    bool isUninstalling = false;
+    float uninstallProgress = 0.f;
+    sf::Clock uninstallClock;
+
 public:
     SoftwareInstallerApp();
     bool getIsErrorOpen() const { return isErrorOpen; }

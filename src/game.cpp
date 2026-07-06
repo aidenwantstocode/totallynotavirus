@@ -291,6 +291,15 @@ void Game::update() {
         }
         
         if (elapsed > bootDuration) {
+            notepad.setIsOpen(false);
+            terminal.setIsOpen(false);
+            installerWizard.setIsOpen(false);
+            fileExplorer.setIsOpen(false);
+            settingsApp.setIsOpen(false);
+            defragApp.setIsOpen(false);
+            antivirusApp.setIsOpen(false);
+            driveRecovery.setIsOpen(false);
+
             if (isNextBootCorrupted) {
                 currentState = GameState::CorruptedOS;
                 desktop.setCorruptedTheme(true);

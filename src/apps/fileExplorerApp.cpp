@@ -278,7 +278,7 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
                 if (shortcut.path == "C:\\Desktop") {
                     isUnsupportedErrorOpen = true;
                     errorTitleText.setString("Access Denied");
-                    errorBodyText.setString("Error: The Desktop folder is protected by the operating system\nkernel. Files on the Desktop must be accessed from the\nworkspace screen directly.");
+                    errorBodyText.setString("Error: The Desktop folder is protected by\nthe operating system kernel. Files on the\nDesktop must be accessed from the workspace\nscreen directly.");
                     return;
                 }
                 currentPath = shortcut.path;
@@ -305,7 +305,7 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
         if (deleteButton.getGlobalBounds().contains(mousePos)) {
             isUnsupportedErrorOpen = true;
             errorTitleText.setString("Deletion Prohibited");
-            errorBodyText.setString("Error: File system integrity lock.\nDeletion of system components is prohibited\nunder the active session.");
+            errorBodyText.setString("Error: File system integrity lock.\nDeletion of system components is\nprohibited under the active session.");
             return;
         }
 
@@ -327,7 +327,7 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
                         if (visibleItems[i].path == "C:\\Desktop") {
                             isUnsupportedErrorOpen = true;
                             errorTitleText.setString("Access Denied");
-                            errorBodyText.setString("Error: The Desktop folder is protected by the operating system\nkernel. Files on the Desktop must be accessed from the\nworkspace screen directly.");
+                            errorBodyText.setString("Error: The Desktop folder is protected by\nthe operating system kernel. Files on the\nDesktop must be accessed from the workspace\nscreen directly.");
                             return;
                         }
                         scrollOffsetY = 0.f;

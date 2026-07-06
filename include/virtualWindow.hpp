@@ -24,6 +24,7 @@ protected:
     float animTime = 0.f;
     sf::Vector2f animStartPos;
     float openDelayTimer = 0.f;
+    sf::Clock animClock;
 
 public:
     static float ramLagMultiplier;

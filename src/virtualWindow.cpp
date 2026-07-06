@@ -54,6 +54,7 @@ void VirtualWindow::triggerOpenAnimation(sf::Vector2f iconPos) {
     isOpening = true;
     animTime = 0.f;
     animStartPos = iconPos;
+    animClock.restart();
 
     float delay = (ramLagMultiplier - 2.5f) * 0.22f;
     if (delay < 0.f) delay = 0.f;
@@ -79,15 +80,11 @@ void VirtualWindow::setPosition(float x, float y) {
 void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     if (!isOpen) return;
 
-    //convert mouse position to world coordinates
     sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
-    sf::Vector2f winPos = windowFrame.getPosition();
-    float winWidth = windowFrame.getSize().x;
-    float winHeight = windowFrame.getSize().y;
+    if (isOpening) return;
 
-    //check title bar click for drag
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         if (windowFrame.getGlobalBounds().contains(mousePos)) {
             hasFocus = true;
@@ -101,35 +98,28 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
             return;
         }
 
-        sf::FloatRect titleBarBounds(winPos.x, winPos.y, winWidth - 30.f, 30.f);
-        if (hasFocus && titleBarBounds.contains(mousePos)) {
+        //check window title bar drag bounds
+        if (titleBar.getGlobalBounds().contains(mousePos) && !isModalActive()) {
             isDragged = true;
-            dragOffset = mousePos - winPos;
+            dragOffset = mousePos - windowFrame.getPosition();
         }
-
-        // Snap window confinement constraint on release of mouse drag
     } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
-        if (isDragged) {
-            isDragged = false;
-            
-            float x = winPos.x;
-            float y = winPos.y;
+        isDragged = false;
+
+        // Clamp window inside screen boundaries on drag release
+        if (!isModalActive()) {
+            float x = windowFrame.getPosition().x;
+            float y = windowFrame.getPosition().y;
+            float winWidth = windowFrame.getSize().x;
+            float winHeight = windowFrame.getSize().y;
 
             float minY = 0.f;
-            float maxY = 768.f - 40.f - 30.f;
-            if (isModalActive()) {
-                maxY = 768.f - 40.f - winHeight;
-            }
-
+            float maxY = 768.f - 40.f - 30.f; // Taskbar + Title bar height offset
             if (y < minY) y = minY;
             if (y > maxY) y = maxY;
 
             float minX = -winWidth + 40.f;
             float maxX = 1024.f - 40.f;
-            if (isModalActive()) {
-                minX = 0.f;
-                maxX = 1024.f - winWidth;
-            }
 
             if (x < minX) x = minX;
             if (x > maxX) x = maxX;
@@ -148,7 +138,6 @@ void VirtualWindow::handleEvent(const sf::Event& event, const sf::RenderWindow& 
 
 void VirtualWindow::update() {
     if (isOpening) {
-        static sf::Clock animClock;
         float dt = animClock.restart().asSeconds();
         if (dt > 0.1f) dt = 0.1f;
 

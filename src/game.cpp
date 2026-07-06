@@ -112,6 +112,22 @@ Game::Game() {
     usbAcceptText.setFillColor(sf::Color::Black);
     usbAcceptText.setPosition(usbAcceptButton.getPosition().x + 30.f, usbAcceptButton.getPosition().y + 5.f);
 
+    diagnosticProgressBarBg.setSize(sf::Vector2f(300.f, 20.f));
+    diagnosticProgressBarBg.setFillColor(sf::Color(120, 120, 120));
+    diagnosticProgressBarBg.setOutlineThickness(1.5f);
+    diagnosticProgressBarBg.setOutlineColor(sf::Color::Black);
+    diagnosticProgressBarBg.setPosition(usbPopupFrame.getPosition().x + 25.f, usbPopupFrame.getPosition().y + 80.f);
+
+    diagnosticProgressBar.setSize(sf::Vector2f(0.f, 20.f));
+    diagnosticProgressBar.setFillColor(sf::Color(0, 0, 128));
+    diagnosticProgressBar.setPosition(diagnosticProgressBarBg.getPosition());
+
+    diagnosticProgressText.setFont(systemFont);
+    diagnosticProgressText.setString("Preparing diagnostics...");
+    diagnosticProgressText.setCharacterSize(11);
+    diagnosticProgressText.setFillColor(sf::Color::Black);
+    diagnosticProgressText.setPosition(usbPopupFrame.getPosition().x + 25.f, usbPopupFrame.getPosition().y + 110.f);
+
     usbCancelButton.setSize(sf::Vector2f(100.f, 25.f));
     usbCancelButton.setFillColor(sf::Color(192, 192, 192));
     usbCancelButton.setOutlineThickness(1.5f);
@@ -162,7 +178,11 @@ void Game::processEvents() {
         if (currentState == GameState::HardwarePrompt) {
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 if (usbAcceptButton.getGlobalBounds().contains(mousePos)) {
-                    currentState = GameState::ActiveOS;
+                    currentState = GameState::MountingDiagnostic;
+                    diagnosticClock.restart();
+                    diagnosticProgress = 0.f;
+                    usbPopupTitleText.setString("System Diagnostics Process");
+                    usbPopupBodyText.setString("Scanning new hardware drive mappings...\nUSB Device: Removable Disk (D:)");
                 } else if (usbCancelButton.getGlobalBounds().contains(mousePos)) {
                     currentState = GameState::HardwareCancelSequence;
                     usbPopupTitleText.setString("FATAL ERROR");
@@ -312,6 +332,30 @@ void Game::update() {
                 currentState = GameState::NormalOS;
             }
             stateClock.restart();
+        }
+        return;
+    }
+
+    if (currentState == GameState::MountingDiagnostic) {
+        float elapsed = diagnosticClock.getElapsedTime().asSeconds();
+        diagnosticProgress = (elapsed / 3.5f) * 100.f;
+        if (diagnosticProgress >= 100.f) {
+            diagnosticProgress = 100.f;
+            currentState = GameState::ActiveOS;
+            
+            // SPAWN LOG FILE NOW!
+            fileExplorer.addFileToFolder("C:\\Desktop", "system_log.txt", "txt");
+            desktop.createIcon("system_log.txt", "file_system_log.txt");
+            std::cout << "[OS Kernel] Diagnostic complete. Spawned system_log.txt on desktop.\n";
+        } else {
+            diagnosticProgressBar.setSize(sf::Vector2f((diagnosticProgress / 100.f) * 300.f, 20.f));
+            std::string statusStr = "Scanning sector maps...";
+            if (diagnosticProgress > 75.f) {
+                statusStr = "Mounting drive D:\\...";
+            } else if (diagnosticProgress > 45.f) {
+                statusStr = "Validating system_log entries...";
+            }
+            diagnosticProgressText.setString(statusStr + " (" + std::to_string(static_cast<int>(diagnosticProgress)) + "%)");
         }
         return;
     }
@@ -629,18 +673,6 @@ void Game::update() {
     }
 
     if (currentState == GameState::NormalOS) {
-        if (systemLogsSpawnTimer < 0.f) {
-            systemLogsSpawnTimer = 15.f;
-        }
-        if (systemLogsSpawnTimer > 0.f) {
-            systemLogsSpawnTimer -= dt;
-            if (systemLogsSpawnTimer <= 0.f) {
-                fileExplorer.addFileToFolder("C:\\Desktop", "system_log.txt", "txt");
-                desktop.createIcon("system_log.txt", "file_system_log.txt");
-                std::cout << "[OS Kernel] Spawned system_log.txt on desktop after mount delay.\n";
-            }
-        }
-
         if (!usbPluggedIn && stateClock.getElapsedTime().asSeconds() > usbTriggerDelay) {
             currentState = GameState::HardwarePrompt;
             usbPluggedIn = true;
@@ -758,7 +790,7 @@ void Game::render() {
     
     desktop.drawStartMenu(window);
     
-    if (currentState == GameState::HardwarePrompt || currentState == GameState::HardwareCancelSequence) {
+    if (currentState == GameState::HardwarePrompt || currentState == GameState::HardwareCancelSequence || currentState == GameState::MountingDiagnostic) {
         window.draw(usbPopupFrame);
         window.draw(usbPopupTitleBar);
         window.draw(usbPopupTitleText);
@@ -769,6 +801,10 @@ void Game::render() {
             window.draw(usbAcceptText);
             window.draw(usbCancelButton);
             window.draw(usbCancelText);
+        } else if (currentState == GameState::MountingDiagnostic) {
+            window.draw(diagnosticProgressBarBg);
+            window.draw(diagnosticProgressBar);
+            window.draw(diagnosticProgressText);
         }
     }
 

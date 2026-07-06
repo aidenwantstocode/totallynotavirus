@@ -19,6 +19,7 @@ enum class GameState {
     NormalOS,
     HardwarePrompt,
     HardwareCancelSequence,
+    MountingDiagnostic,
     ActiveOS,
     BSOD,
     CorruptedOS
@@ -77,6 +78,12 @@ private:
     float systemLogsSpawnTimer = -1.f;
     sf::RectangleShape usbPopupFrame;
     sf::RectangleShape usbPopupTitleBar;
+
+    sf::Clock diagnosticClock;
+    float diagnosticProgress = 0.f;
+    sf::RectangleShape diagnosticProgressBar;
+    sf::RectangleShape diagnosticProgressBarBg;
+    sf::Text diagnosticProgressText;
     sf::Text usbPopupTitleText;
     sf::Text usbPopupBodyText;
     sf::RectangleShape usbAcceptButton;

@@ -294,6 +294,7 @@ void Game::update() {
             if (isNextBootCorrupted) {
                 currentState = GameState::CorruptedOS;
                 desktop.setCorruptedTheme(true);
+                installerWizard.setSystemCorrupted(true);
                 driveRecovery.enterCorruptedMode();
                 driveRecovery.setIsOpen(true);
                 windowManager.bringToFront(&driveRecovery);

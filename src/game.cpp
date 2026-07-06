@@ -330,6 +330,8 @@ void Game::update() {
         notepad.setIsOpen(false);
         settingsApp.setIsOpen(false);
         driveRecovery.setIsOpen(false);
+        antivirusApp.setIsOpen(false);
+        defragApp.setIsOpen(false);
     }
 
     if (currentState == GameState::BSOD) {

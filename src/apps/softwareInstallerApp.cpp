@@ -188,7 +188,7 @@ void SoftwareInstallerApp::handleEvent(const sf::Event& event, const sf::RenderW
             }
         } 
         
-        if (uninstallBtn.getGlobalBounds().contains(mousePos) && isFinalized && !isInstalling) { 
+        if (uninstallBtn.getGlobalBounds().contains(mousePos) && !isInstalling) { 
             std::cout << "[Installer] Uninstall button clicked." << std::endl;
             isErrorOpen = true;
             errorPopupPosition = windowFrame.getPosition() + sf::Vector2f(45.f, 100.f);

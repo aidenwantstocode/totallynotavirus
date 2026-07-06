@@ -2,6 +2,8 @@
 #include "apps/fileExplorerApp.hpp"
 #include <iostream>
 
+static std::string wrapText(const std::string& str, size_t lineLimit);
+
 TerminalApp::TerminalApp() : VirtualWindow("Command Prompt", 500, 350) {
     isOpen = false;
     windowFrame.setFillColor(sf::Color(240, 240, 240));
@@ -26,8 +28,90 @@ TerminalApp::TerminalApp() : VirtualWindow("Command Prompt", 500, 350) {
 
 void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     VirtualWindow::handleEvent(event, window);
-    
-    if (!hasFocus || !isOpen || isProcessing) return;
+    if (!isOpen) return;
+
+    sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+    sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+
+    if (event.type == sf::Event::MouseWheelScrolled && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
+        if (contentPane.getGlobalBounds().contains(mousePos)) {
+            std::string wrapped = wrapText(commandHistory + currentInput, 52);
+            int lineCount = 0;
+            for (char c : wrapped) {
+                if (c == '\n') lineCount++;
+            }
+            int maxLines = 15;
+            int overflow = std::max(0, lineCount - maxLines);
+
+            if (event.mouseWheelScroll.delta > 0.f) {
+                terminalScrollOffset += 1;
+            } else if (event.mouseWheelScroll.delta < 0.f) {
+                terminalScrollOffset -= 1;
+            }
+            if (terminalScrollOffset < 0) terminalScrollOffset = 0;
+            if (terminalScrollOffset > overflow) terminalScrollOffset = overflow;
+            return;
+        }
+    }
+
+    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+        sf::Vector2f cpPos = contentPane.getPosition();
+        sf::Vector2f cpSize = contentPane.getSize();
+        
+        float trackX = cpPos.x + cpSize.x - 14.f;
+        float trackY = cpPos.y + 2.f;
+        float trackW = 12.f;
+        float trackH = cpSize.y - 4.f;
+
+        std::string wrapped = wrapText(commandHistory + currentInput, 52);
+        int lineCount = 0;
+        for (char c : wrapped) {
+            if (c == '\n') lineCount++;
+        }
+        int maxLines = 15;
+        int overflow = std::max(0, lineCount - maxLines);
+
+        if (overflow > 0) {
+            sf::FloatRect trackBounds(trackX, trackY, trackW, trackH);
+            if (trackBounds.contains(mousePos)) {
+                isDraggingScrollbar = true;
+                dragScrollStartY = mousePos.y;
+                return;
+            }
+        }
+    }
+
+    if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+        isDraggingScrollbar = false;
+    }
+
+    if (isDraggingScrollbar && event.type == sf::Event::MouseMoved) {
+        sf::Vector2f cpPos = contentPane.getPosition();
+        sf::Vector2f cpSize = contentPane.getSize();
+        float usableHeight = cpSize.y - 4.f;
+
+        std::string wrapped = wrapText(commandHistory + currentInput, 52);
+        int lineCount = 0;
+        for (char c : wrapped) {
+            if (c == '\n') lineCount++;
+        }
+        int maxLines = 15;
+        int overflow = std::max(0, lineCount - maxLines);
+
+        float handleHeight = std::max(20.f, usableHeight * (static_cast<float>(maxLines) / lineCount));
+        float trackRange = usableHeight - handleHeight;
+
+        if (trackRange > 0.f) {
+            float deltaY = mousePos.y - cpPos.y - 2.f - (handleHeight / 2.f);
+            float scrollPct = deltaY / trackRange;
+            if (scrollPct < 0.f) scrollPct = 0.f;
+            if (scrollPct > 1.f) scrollPct = 1.f;
+            
+            terminalScrollOffset = static_cast<int>((1.f - scrollPct) * overflow);
+        }
+    }
+
+    if (!hasFocus || isProcessing) return;
 
     if (event.type == sf::Event::TextEntered) {
         
@@ -117,6 +201,7 @@ void TerminalApp::handleEvent(const sf::Event& event, const sf::RenderWindow& wi
         }
 
         terminalText.setString(commandHistory + currentInput);
+        terminalScrollOffset = 0;
     }
 }
 
@@ -197,11 +282,19 @@ void TerminalApp::draw(sf::RenderWindow& window) {
         // Max lines we can fit is 15
         size_t maxLines = 15;
         std::string displayedText = "";
+        
+        int overflow = std::max(0, static_cast<int>(lines.size()) - static_cast<int>(maxLines));
+        if (terminalScrollOffset > overflow) terminalScrollOffset = overflow;
+        if (terminalScrollOffset < 0) terminalScrollOffset = 0;
+
         size_t startIndex = 0;
         if (lines.size() > maxLines) {
-            startIndex = lines.size() - maxLines;
+            startIndex = lines.size() - maxLines - terminalScrollOffset;
         }
-        for (size_t i = startIndex; i < lines.size(); ++i) {
+        size_t endIndex = startIndex + maxLines;
+        if (endIndex > lines.size()) endIndex = lines.size();
+
+        for (size_t i = startIndex; i < endIndex; ++i) {
             displayedText += lines[i] + "\n";
         }
 
@@ -220,9 +313,13 @@ void TerminalApp::draw(sf::RenderWindow& window) {
             window.draw(track);
 
             // Scrollbar slider handle
-            float handleHeight = std::max(20.f, (cpSize.y - 4.f) * (static_cast<float>(maxLines) / lines.size()));
+            float usableHeight = cpSize.y - 4.f;
+            float handleHeight = std::max(20.f, usableHeight * (static_cast<float>(maxLines) / lines.size()));
+            float trackRange = usableHeight - handleHeight;
+
+            float scrollPct = overflow > 0 ? (1.f - (static_cast<float>(terminalScrollOffset) / overflow)) : 1.f;
             sf::RectangleShape handle(sf::Vector2f(10.f, handleHeight));
-            handle.setPosition(cpPos.x + cpSize.x - 13.f, cpPos.y + cpSize.y - 2.f - handleHeight);
+            handle.setPosition(cpPos.x + cpSize.x - 13.f, cpPos.y + 2.f + scrollPct * trackRange);
             handle.setFillColor(sf::Color(180, 180, 180));
             window.draw(handle);
         }

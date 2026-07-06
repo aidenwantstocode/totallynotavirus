@@ -54,6 +54,10 @@ private:
     sf::Text errorBodyText;
     sf::Text errorOkText;
 
+    bool isDraggingScrollbar = false;
+    float dragScrollStartY = 0.f;
+    float dragScrollStartOffset = 0.f;
+
     void updateLayout();
     void selectItem(int index);
     void loadFileSystem();

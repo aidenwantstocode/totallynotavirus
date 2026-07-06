@@ -1,5 +1,6 @@
 #ifndef TERMINAL_APP_HPP
 #define TERMINAL_APP_HPP
+
 #include "virtualWindow.hpp"
 #include <string>
 
@@ -25,6 +26,10 @@ private:
     bool regsyncSuccess = false;
     bool fat32Success = false;
     bool safeSuccess = false;
+
+    int terminalScrollOffset = 0;
+    bool isDraggingScrollbar = false;
+    float dragScrollStartY = 0.f;
 
 public:
     TerminalApp();

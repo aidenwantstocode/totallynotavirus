@@ -246,6 +246,30 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
         sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
 
+        // Check if clicked scrollbar track or handle
+        sf::Vector2f cpPos = contentPane.getPosition();
+        sf::Vector2f cpSize = contentPane.getSize();
+        
+        float trackX = cpPos.x + cpSize.x - 14.f;
+        float trackY = cpPos.y + 2.f;
+        float trackW = 12.f;
+        float trackH = cpSize.y - 4.f;
+
+        int itemsPerRow = std::max(1, static_cast<int>((contentPane.getSize().x - 55.f) / (45.f + 55.f)));
+        int rows = (visibleItems.size() + itemsPerRow - 1) / std::max(1, itemsPerRow);
+        float totalHeight = rows * 80.f + 40.f;
+        float viewportHeight = contentPane.getSize().y - 40.f;
+
+        if (totalHeight > viewportHeight) {
+            sf::FloatRect trackBounds(trackX, trackY, trackW, trackH);
+            if (trackBounds.contains(mousePos)) {
+                isDraggingScrollbar = true;
+                dragScrollStartY = mousePos.y;
+                dragScrollStartOffset = scrollOffsetY;
+                return;
+            }
+        }
+
         // Sidebar shortcuts
         for (const auto& shortcut : sidebarShortcuts) {
             if (shortcut.isVisible && shortcut.rect.getGlobalBounds().contains(mousePos)) {
@@ -310,6 +334,38 @@ void FileExplorerApp::handleEvent(const sf::Event& event, const sf::RenderWindow
 
         if (!itemClicked && contentPane.getGlobalBounds().contains(mousePos)) {
             selectItem(-1);
+        }
+    } else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+        isDraggingScrollbar = false;
+    }
+
+    if (isDraggingScrollbar && event.type == sf::Event::MouseMoved) {
+        sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+
+        sf::Vector2f cpPos = contentPane.getPosition();
+        sf::Vector2f cpSize = contentPane.getSize();
+        float usableHeight = cpSize.y - 4.f;
+
+        int itemsPerRow = std::max(1, static_cast<int>((contentPane.getSize().x - 55.f) / (45.f + 55.f)));
+        int rows = (visibleItems.size() + itemsPerRow - 1) / std::max(1, itemsPerRow);
+        float totalHeight = rows * 80.f + 40.f;
+        float viewportHeight = contentPane.getSize().y - 40.f;
+        
+        float maxScroll = totalHeight - viewportHeight;
+        float minScroll = std::min(0.f, viewportHeight - totalHeight - 20.f);
+        
+        float handleHeight = std::max(25.f, usableHeight * (viewportHeight / totalHeight));
+        float trackRange = usableHeight - handleHeight;
+
+        if (trackRange > 0.f) {
+            float deltaY = mousePos.y - dragScrollStartY;
+            float scrollDeltaPct = deltaY / trackRange;
+            float newScrollOffset = dragScrollStartOffset - scrollDeltaPct * maxScroll;
+            if (newScrollOffset > 0.f) newScrollOffset = 0.f;
+            if (newScrollOffset < minScroll) newScrollOffset = minScroll;
+            scrollOffsetY = newScrollOffset;
+            updateLayout();
         }
     }
 }

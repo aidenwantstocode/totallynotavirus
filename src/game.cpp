@@ -415,6 +415,9 @@ void Game::update() {
 
         if (antivirusActive) {
             activeCpu += 5.f;
+            if (antivirusApp.getIsMasterShieldActive()) {
+                activeCpu += 15.f;
+            }
             if (antivirusApp.isFileShieldActive() || antivirusApp.isActiveMonitorActive() || antivirusApp.isMemoryFirewallActive()) {
                 activeCpu += 10.f;
             }
@@ -557,18 +560,20 @@ void Game::update() {
             if (currentWave == 4) fileInterval = 1.5f;
             if (currentWave == 5) fileInterval = 1.0f;
 
-            if (antivirusApp.isFileShieldActive()) {
-                fileInterval *= 2.0f;
-            }
-
             if (fileSpawnTimer <= 0.f) {
-                static int leakIndex = 0;
-                std::string filename = "leak_" + std::to_string(leakIndex++) + ".sys";
-                fileExplorer.addFileToFolder("C:\\Desktop", filename, "txt");
-                desktop.createIcon(filename, "file_" + filename);
-                spawnedLeaks.push_back(filename);
-                std::cout << "[Virus Wave] Created corrupted file: " << filename << " on desktop\n";
-                fileSpawnTimer = fileInterval;
+                if (antivirusApp.isFileShieldActive()) {
+                    std::cout << "[Antivirus] Passively blocked a file leak spawn attempt!\n";
+                    antivirusApp.logBlockedThreat("File Leak Threat (Filesystem Guard)");
+                    fileSpawnTimer = fileInterval;
+                } else {
+                    static int leakIndex = 0;
+                    std::string filename = "leak_" + std::to_string(leakIndex++) + ".sys";
+                    fileExplorer.addFileToFolder("C:\\Desktop", filename, "txt");
+                    desktop.createIcon(filename, "file_" + filename);
+                    spawnedLeaks.push_back(filename);
+                    std::cout << "[Virus Wave] Created corrupted file: " << filename << " on desktop\n";
+                    fileSpawnTimer = fileInterval;
+                }
             }
 
             if (waveTimer <= 0.f) {
@@ -649,6 +654,7 @@ void Game::update() {
     fileExplorer.update();
     driveRecovery.update();
     antivirusApp.update();
+    defragApp.setLeakCount(fileExplorer.countCorruptedFiles());
     defragApp.update();
     glitchManager.update();
 
@@ -823,13 +829,10 @@ void Game::updateWindowView(unsigned int windowWidth, unsigned int windowHeight)
 
 void Game::spawnPopup() {
     bool antivirusActive = installerWizard.getIsFinalized() && installerWizard.isComponentChecked("antivirus");
-    if (antivirusActive) {
-        float level = antivirusApp.getProtectionLevel();
-        float suppressionChance = level / 3.0f; // up to 33.3%
-        if ((rand() % 100) / 100.f < suppressionChance) {
-            std::cout << "[Antivirus] Passively blocked a virus popup spawn attempt!\n";
-            return;
-        }
+    if (antivirusActive && antivirusApp.isActiveMonitorActive()) {
+        std::cout << "[Antivirus] Passively blocked a virus popup spawn attempt!\n";
+        antivirusApp.logBlockedThreat("Popup Alert Threat (Active Monitor)");
+        return;
     }
 
     float rx = 50.f + static_cast<float>(rand() % 650);

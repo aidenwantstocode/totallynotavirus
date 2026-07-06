@@ -32,6 +32,24 @@ public:
     bool isFileShieldActive() const;
     bool isActiveMonitorActive() const;
     bool isMemoryFirewallActive() const;
+
+    void logBlockedThreat(const std::string& threatName);
+    bool getIsMasterShieldActive() const { return isMasterShieldActive; }
+
+private:
+    bool isMasterShieldActive = false;
+    bool isToggling = false;
+    float toggleDelayTimer = 0.f;
+    bool targetToggleState = false;
+
+    std::vector<std::string> blockedThreatLogs;
+
+    sf::RectangleShape toggleBtn;
+    sf::Text toggleBtnText;
+    sf::RectangleShape logBoxBg;
+    sf::Text logBoxTitleText;
+    std::vector<sf::Text> logTexts;
+    sf::Clock toggleClock;
 };
 
 #endif

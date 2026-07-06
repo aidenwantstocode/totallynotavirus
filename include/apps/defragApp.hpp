@@ -30,6 +30,11 @@ public:
 
     bool getIsDefragmenting() const { return isDefragmenting; }
     bool checkAndClearCleanRequest();
+
+    void setLeakCount(int leaks);
+
+private:
+    int leakCount = 0;
 };
 
 #endif

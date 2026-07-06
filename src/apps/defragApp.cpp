@@ -58,6 +58,10 @@ bool DefragApp::checkAndClearCleanRequest() {
     return false;
 }
 
+void DefragApp::setLeakCount(int leaks) {
+    leakCount = leaks;
+}
+
 void DefragApp::update() {
     VirtualWindow::update();
 
@@ -69,7 +73,15 @@ void DefragApp::update() {
             progress = 100.f;
             isDefragmenting = false;
             cleanRequested = true;
-            statusInfo.setString("Heap Allocation: OPTIMIZED");
+            statusInfo.setString("Heap Status: OPTIMIZED");
+            statusInfo.setFillColor(sf::Color(0, 128, 0));
+        }
+    } else {
+        if (leakCount > 0) {
+            statusInfo.setString("Heap Status: Fragmented (" + std::to_string(leakCount) + " leaks)");
+            statusInfo.setFillColor(sf::Color::Red);
+        } else {
+            statusInfo.setString("Heap Status: OPTIMIZED");
             statusInfo.setFillColor(sf::Color(0, 128, 0));
         }
     }

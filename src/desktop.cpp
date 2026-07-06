@@ -114,7 +114,11 @@ void Desktop::createIcon(const std::string& title, const std::string& id) {
 
     icon.body.setSize(sf::Vector2f(40, 40));
     icon.body.setPosition(x, y);
-    icon.body.setFillColor(sf::Color(220, 220, 100));
+    if (id.find(".txt") != std::string::npos || id.find(".sys") != std::string::npos) {
+        icon.body.setFillColor(sf::Color::White);
+    } else {
+        icon.body.setFillColor(sf::Color(220, 220, 100));
+    }
     icon.body.setOutlineThickness(1);
     icon.body.setOutlineColor(sf::Color::Black);
 
